@@ -112,12 +112,13 @@ export class FheSession {
         return this.finish(opts.domain, fn, ciphertext, opts.reveal, opts.raw);
     }
     async privateEval(opts) {
-        const sealed = await Promise.all(opts.values.map((value) => this.sealInput(opts.domain, value, opts.sealedInputs)));
+        const domain = opts.op === 'mean' && opts.domain === 'int' ? 'float' : opts.domain;
+        const sealed = await Promise.all(opts.values.map((value) => this.sealInput(domain, value, opts.sealedInputs)));
         if (opts.op === 'mean') {
-            const sumFn = resolveOp('add', opts.domain, 2);
+            const sumFn = resolveOp('add', domain, 2);
             const sum = await this.fold(sumFn, sealed);
-            const count = await this.fhe.encrypt(opts.domain, String(sealed.length));
-            const divFn = resolveOp('div', opts.domain === 'int' ? 'float' : opts.domain, 2);
+            const count = await this.fhe.encrypt(domain, String(sealed.length));
+            const divFn = resolveOp('div', domain, 2);
             const mean = await this.fhe.call(divFn, [sum, count]);
             return this.finish('float', 'mean', mean, opts.reveal, opts.raw);
         }

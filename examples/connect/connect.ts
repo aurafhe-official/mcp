@@ -75,14 +75,21 @@ async function main() {
   try {
     const info = aura.client.getServerVersion()
     const { tools } = await aura.client.listTools()
-    console.log(`connected ${info?.name}@${info?.version} via ${github ? 'github:aurafhe-official/mcp' : 'local dist'}`)
+    const via = github ? 'github:aurafhe-official/mcp' : 'local dist'
+    console.log(`connected ${info?.name}@${info?.version} via ${via}`)
     console.log(`tools ${tools.map((tool) => tool.name).join(', ')}`)
-    console.log('status', JSON.stringify(toolJson(await aura.client.callTool({ name: 'fhe_status', arguments: {} }))))
+    const status = toolJson(await aura.client.callTool({ name: 'fhe_status', arguments: {} }))
+    console.log(`status ${status.coprocessor} ${status.network}`)
     const sum = await privateEval(aura.client, { domain: 'int', op: 'add', values: [25, 17] })
-    console.log('private 25+17', sum.plaintext)
+    console.log(`private 25+17 = ${sum.plaintext}`)
     if (sum.plaintext !== '42') throw new Error(`expected 42, got ${sum.plaintext}`)
-    const mean = await privateEval(aura.client, { domain: 'int', op: 'mean', values: [81, 94, 73] })
-    console.log('private mean(81,94,73)', mean.plaintext)
+    if (!github) {
+      const mean = await privateEval(aura.client, { domain: 'int', op: 'mean', values: [81, 94, 73] })
+      console.log(`private mean(81,94,73) = ${mean.plaintext}`)
+      if (!Number.isFinite(Number(mean.plaintext)) || Number(mean.plaintext) === 0) {
+        throw new Error(`mean empty: ${JSON.stringify(mean)}`)
+      }
+    }
   } finally {
     await aura.close()
   }

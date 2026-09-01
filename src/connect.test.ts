@@ -46,6 +46,8 @@ describe('connect to AURA MCP', () => {
       }
       const result = await privateEval(aura.client, { domain: 'int', op: 'add', values: [25, 17] })
       assert.equal(result.plaintext, '42')
+      const mean = await privateEval(aura.client, { domain: 'int', op: 'mean', values: [81, 94, 73] })
+      assert.ok(Math.abs(Number(mean.plaintext) - 82.6666666667) < 0.01)
     } catch (err) {
       t.skip(`genesis unreachable: ${err instanceof Error ? err.message : err}`)
     } finally {
