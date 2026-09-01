@@ -1,0 +1,60 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+dist/
+!/dist/
+!/dist/**
+build/
+*.tsbuildinfo
+.next/
+.turbo/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg
+
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# IDE / agent state
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+.DS_Store
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# FHE artefacts — never commit keys or large blobs
+file/skb
+file/pkb
+file/dictb
+*.kxxopt
+keys/
+keyxx.sdk/keys/
+keyxx.sdk/opt-dict/
+
+# Logs / coverage
+coverage/
+*.log

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.github.aurafhe-official/mcp",
+  "title": "AURA MCP",
+  "description": "MCP server for private compute. Add it to any agent host — the model never sees the data.",
+  "repository": {
+    "url": "https://github.com/aurafhe-official/mcp",
+    "source": "github"
+  },
+  "version": "0.4.0",
+  "websiteUrl": "https://afhe.io",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@aurafhe/mcp",
+      "version": "0.4.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "AFHE_API_URL",
+          "description": "Override the private-compute backend. Default is https://api.afhe.io:8443",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "AFHE_API_KEY",
+          "description": "Optional bearer token",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

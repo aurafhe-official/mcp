@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Aura FHE — browser demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { font-size: 1.4rem; }
+    fieldset { margin: 1rem 0; }
+    input[type="number"] { width: 5em; }
+    button { padding: 0.4rem 0.9rem; cursor: pointer; }
+    pre { background: #f4f4f4; padding: 0.6rem; border-radius: 6px; overflow-x: auto; }
+    .ok { color: #1b7a1b; }
+    .err { color: #b00020; }
+    label { display: inline-block; min-width: 8em; }
+  </style>
+</head>
+<body>
+  <h1>Aura FHE — in-browser demo</h1>
+  <p>
+    Encrypt two integers locally, send only ciphertext over HTTPS to the
+    coprocessor, ask it to add them, and decrypt the result. The server
+    never sees the plaintext values.
+  </p>
+
+  <fieldset>
+    <legend>Connection</legend>
+    <label for="url">Server URL</label>
+    <input id="url" type="text" value="https://localhost:8443" style="width:22em" />
+    <button id="connect">Connect</button>
+    <p id="status"></p>
+  </fieldset>
+
+  <fieldset disabled id="opsFieldset">
+    <legend>Encrypted add (int, range 0–4 with default keys)</legend>
+    <label for="a">a =</label>
+    <input id="a" type="number" min="0" max="4" value="2" />
+    <label for="b">b =</label>
+    <input id="b" type="number" min="0" max="4" value="1" />
+    <button id="go">Encrypt → Add → Decrypt</button>
+    <pre id="trace"></pre>
+  </fieldset>
+
+  <script type="module">
+    // Pulled from the bundled ESM build of @aura/fhe-client.
+    // Build locally with `cd clients/typescript && npm install && npm run build`
+    // or point at the published CDN: https://esm.sh/@aura/fhe-client
+    import { connect } from "https://esm.sh/@aura/fhe-client@0.3.0";
+
+    const $ = (id) => document.getElementById(id);
+    let fhe = null;
+
+    $("connect").addEventListener("click", async () => {
+      $("status").textContent = "connecting…";
+      $("status").className = "";
+      try {
+        fhe = await connect({ baseUrl: $("url").value });
+        $("status").textContent = "connected — keys loaded.";
+        $("status").className = "ok";
+        $("opsFieldset").disabled = false;
+      } catch (e) {
+        $("status").textContent = `error: ${e.message}`;
+        $("status").className = "err";
+      }
+    });
+
+    $("go").addEventListener("click", async () => {
+      const a = parseInt($("a").value, 10);
+      const b = parseInt($("b").value, 10);
+      const lines = [];
+      try {
+        lines.push(`encrypt(${a}) → POST /encrypt/int`);
+        const ca = await fhe.encryptInt(a);
+        lines.push(`  ciphertext (${ca.length} bytes): ${ca.slice(0, 64)}…`);
+
+        lines.push(`encrypt(${b}) → POST /encrypt/int`);
+        const cb = await fhe.encryptInt(b);
+        lines.push(`  ciphertext (${cb.length} bytes): ${cb.slice(0, 64)}…`);
+
+        lines.push(`add → POST /call { fn: "AddCipherInt" }`);
+        const cs = await fhe.addInt(ca, cb);
+
+        lines.push(`decrypt(sum) → POST /decrypt/int`);
+        const pt = await fhe.decryptInt(cs);
+        lines.push(``);
+        lines.push(`result: ${a} + ${b} = ${pt}`);
+      } catch (e) {
+        lines.push(`error: ${e.message}`);
+      }
+      $("trace").textContent = lines.join("\n");
+    });
+  </script>
+</body>
+</html>

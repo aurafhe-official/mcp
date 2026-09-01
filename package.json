@@ -1,0 +1,67 @@
+{
+  "name": "@aurafhe/mcp",
+  "version": "0.4.0",
+  "description": "MCP server for private AI compute. Add it to Cursor, Claude, or any host — the model never sees the data.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp": "dist/index.js",
+    "aura-fhe": "dist/index.js",
+    "aura-fhe-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "prepublishOnly": "npm run build",
+    "test": "tsc && tsx --test src/*.test.ts",
+    "start": "node dist/index.js",
+    "check": "bash scripts/check-network.sh",
+    "launch": "bash scripts/launch.sh",
+    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js"
+  },
+  "keywords": [
+    "mcp-server",
+    "mcp",
+    "model-context-protocol",
+    "agents",
+    "tools",
+    "fhe",
+    "ai",
+    "private-ai",
+    "homomorphic",
+    "aura",
+    "encrypted-compute",
+    "cursor",
+    "claude"
+  ],
+  "author": "Mochi Labs <gen@afhe.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurafhe-official/mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aurafhe-official/mcp/issues"
+  },
+  "homepage": "https://afhe.io",
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.0.0"
+  },
+  "optionalDependencies": {
+    "undici": "^6.21.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

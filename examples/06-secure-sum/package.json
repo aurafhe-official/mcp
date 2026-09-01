@@ -1,0 +1,9 @@
+{
+  "name": "secure-sum",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aura/fhe-client": "^0.3.0"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules
+.git
+clients
+examples
+docs
+coverage
+*.md
+!README.md

@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aura-fhe"
+version = "0.3.0"
+description = "Python client for the Aura Fully Homomorphic Encryption coprocessor"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mochi Labs", email = "gen@afhe.io" }]
+requires-python = ">=3.8"
+keywords = ["fhe", "homomorphic", "encryption", "privacy", "aura", "afhe"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.urls]
+Homepage      = "https://afhe.io"
+Documentation = "https://docs.afhe.io"
+Repository    = "https://github.com/aurafhe-official/mcp"
+Issues        = "https://github.com/aurafhe-official/mcp/issues"
+
+[tool.setuptools]
+packages = ["aura_fhe"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
