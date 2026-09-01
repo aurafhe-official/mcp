@@ -30,11 +30,11 @@ npx -y github:aurafhe-official/mcp
 claude mcp add aura -- npx -y github:aurafhe-official/mcp
 ```
 
-That is the whole install. Then ask the agent:
+That is the whole product. Then ask the agent:
 
 > Privately add 25 and 17.
 
-It should call `fhe_private_eval` and return `42`. No SDK. No keys in chat. No localhost.
+It should call `fhe_private_eval` and return `42`. No keys in chat. No localhost.
 
 After `npm publish`, the same paste with `@aurafhe/mcp` also works.
 
@@ -131,8 +131,6 @@ Zero-config talks to genesis: [`https://api.afhe.io:8443`](https://api.afhe.io:8
 | `AFHE_API_KEY` | — | Bearer token if required |
 | `AFHE_TIMEOUT_MS` | `120000` | Per-request timeout |
 | `AFHE_INSECURE_TLS` | genesis + localhost | Set `0` to require a valid certificate |
-
-Apps that are not MCP hosts: [`clients/`](clients/). Docs: [docs.afhe.io](https://docs.afhe.io)
 
 </details>
 

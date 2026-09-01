@@ -6,7 +6,7 @@ labels: bug
 assignees: ''
 ---
 
-**Which surface**: MCP (`@aurafhe/mcp`) / TypeScript / Go / Python / CLI / multiple
+**Which surface**: MCP (`github:aurafhe-official/mcp`)
 
 **Server**: Aura FHE coprocessor version `X.Y.Z` (or commit), running on `<platform>`
 

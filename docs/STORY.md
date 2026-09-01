@@ -2,7 +2,7 @@
 
 AI is moving from assistants to agents to transactions to organisations to machines. Agents do work through **tools**. MCP is how those tools are wired.
 
-Today's stack protects data at rest and in transit — then decrypts it the moment a model (or a tool behind the model) works on it. That compute-time gap is the product.
+Today's stack protects data at rest and in transit — then decrypts it the moment a model works on it. That compute-time gap is the product.
 
 ## What this MCP server does
 
@@ -22,7 +22,7 @@ github:aurafhe-official/mcp     ← this repository
 AURA network   https://api.afhe.io:8443
 ```
 
-Paste `npx -y github:aurafhe-official/mcp`. Language SDKs in `clients/` are the same backend for apps that are not MCP hosts.
+Paste `npx -y github:aurafhe-official/mcp`. That is the product.
 
 ## What ships today
 
@@ -36,6 +36,6 @@ Encrypted retrieval, private SQL, and private inference are on the AURA deck. Th
 
 ## Who
 
-Mochi Labs Pte. Ltd. · [gen@afhe.io](mailto:gen@afhe.io) · [afhe.io](https://afhe.io) · [docs.afhe.io](https://docs.afhe.io)
+Mochi Labs Pte. Ltd. · [gen@afhe.io](mailto:gen@afhe.io) · [afhe.io](https://afhe.io)
 
 Canonical home: [github.com/aurafhe-official/mcp](https://github.com/aurafhe-official/mcp)

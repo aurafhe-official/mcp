@@ -1,8 +1,6 @@
 # Protocol
 
-The Aura FHE coprocessor speaks JSON over HTTPS. Every client in this repo is a
-thin wrapper around the endpoints below. If your favourite language is not here
-yet, copy this document and you have an SDK.
+This MCP server talks JSON over HTTPS to the AURA network. The contract is below.
 
 Production network: `https://api.afhe.io:8443`. Local operators: `https://localhost:8443`.
 
@@ -231,10 +229,7 @@ Non-2xx responses always return:
 
 ## TLS
 
-Production deployments terminate TLS at the server. The reference local build
-ships with a self-signed certificate; SDKs auto-accept self-signed certs only
-when the host is `localhost`. For non-local servers, install a real
-certificate or pass an explicit "trust this CA" knob.
+Production deployments terminate TLS at the server. This MCP trusts genesis (`api.afhe.io`) and localhost. For other hosts, install a real certificate or set `AFHE_INSECURE_TLS=1`.
 
 ---
 

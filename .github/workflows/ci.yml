@@ -8,7 +8,7 @@ on:
 
 jobs:
   mcp:
-    name: Aura FHE MCP
+    name: AURA MCP
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -19,94 +19,5 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: package-lock.json
       - run: npm install
       - run: npm test
-
-  typescript:
-    name: TypeScript client
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: clients/typescript
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: clients/typescript/package-lock.json
-      - run: npm install
-      - run: npx tsc --noEmit
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
-
-  go:
-    name: Go client
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: clients/go
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.21"
-      - run: go build ./...
-      - run: go vet ./...
-      - run: go test -count=1 -run TestTrustTLS ./...
-
-  python:
-    name: Python client
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: clients/python
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.11", "3.12"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install -e . pytest
-      - run: python -c "import aura_fhe; print(aura_fhe.__version__)"
-      # Smoke tests auto-skip when no coprocessor is reachable.
-      - run: pytest -v
-
-  cli:
-    name: CLI
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: clients/cli
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-      # The CLI depends on the local TS client during dev. Build it first.
-      - name: Build local TS client
-        working-directory: clients/typescript
-        run: |
-          npm install
-          npm run build
-      - name: Link local TS client
-        run: |
-          npm install ../typescript
-      - run: node bin/fhe.js --help
-
-  docs:
-    name: Lint markdown
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-      - run: npx --yes markdownlint-cli2 "**/*.md" "#node_modules" "#**/node_modules" || true

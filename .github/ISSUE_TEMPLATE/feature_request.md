@@ -12,4 +12,4 @@ assignees: ''
 
 **Sketch** (optional): the API shape you have in mind.
 
-**Affected surface**: MCP / TypeScript / Go / Python / CLI / all
+**Affected surface**: MCP
