@@ -28,6 +28,7 @@
 ```bash
 npx -y github:aurafhe-official/mcp
 claude mcp add aura -- npx -y github:aurafhe-official/mcp
+npm run connect:github
 ```
 
 That is the whole product. Then ask the agent:

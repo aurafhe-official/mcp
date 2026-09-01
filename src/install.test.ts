@@ -40,5 +40,11 @@ describe('anyone can add this MCP', () => {
     assert.match(readme, /mcpServers/)
     assert.ok(existsSync(join(root, 'docs/assets/aura.png')))
     assert.ok(existsSync(join(root, 'docs/assets/social.png')))
+
+    const connect = JSON.parse(read('examples/connect/mcp.json')) as {
+      mcpServers: { aura: { command: string; args: string[] } }
+    }
+    assert.equal(connect.mcpServers.aura.command, 'npx')
+    assert.ok(connect.mcpServers.aura.args.includes('github:aurafhe-official/mcp'))
   })
 })

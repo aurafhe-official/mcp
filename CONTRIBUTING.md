@@ -5,6 +5,7 @@ Canonical repo: [github.com/aurafhe-official/mcp](https://github.com/aurafhe-off
 ```bash
 npm install
 npm test
+npm run connect
 npm run inspector
 ```
 

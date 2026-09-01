@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "aura": {
+      "command": "npx",
+      "args": ["-y", "github:aurafhe-official/mcp"]
+    }
+  }
+}
