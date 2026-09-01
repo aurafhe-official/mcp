@@ -39,4 +39,17 @@ describe('repo audit — MCP only', () => {
     assert.doesNotMatch(story, /Language SDKs/)
     assert.match(story, /aurafhe-official\/mcp/)
   })
+
+  test('GitHub home is aurafhe-official/mcp, not an unpublished npm or /mcp on genesis', () => {
+    const readme = read('README.md')
+    assert.doesNotMatch(readme, /github\.com\/aurafhe\/mcp/)
+    assert.match(readme, /not on npm yet/)
+    const protocol = read('docs/PROTOCOL.md')
+    assert.match(protocol, /There is \*\*no\*\*/)
+    assert.match(protocol, /28 Aug 2026/)
+    assert.doesNotMatch(protocol, /Clients in this repo/)
+    const bugs = read('.github/ISSUE_TEMPLATE/bug_report.md')
+    assert.doesNotMatch(bugs, /one of the clients/)
+    assert.match(read('docs/GITHUB.md'), /aurafhe-official\/mcp/)
+  })
 })

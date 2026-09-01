@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a problem with one of the clients or the protocol behaviour
+about: Report a problem with the AURA MCP server
 title: "[BUG] "
 labels: bug
 assignees: ''
@@ -8,7 +8,7 @@ assignees: ''
 
 **Which surface**: MCP (`github:aurafhe-official/mcp`)
 
-**Server**: Aura FHE coprocessor version `X.Y.Z` (or commit), running on `<platform>`
+**Coprocessor**: `https://api.afhe.io:8443` (or your `AFHE_API_URL`)
 
 **Reproduction**:
 ```
@@ -24,4 +24,4 @@ assignees: ''
 <paste here>
 ```
 
-**Environment**: OS, runtime version (Node / Go / Python).
+**Environment**: OS, Node version, MCP host (Cursor / Claude / VS Code / other).

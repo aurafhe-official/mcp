@@ -37,7 +37,7 @@ That is the whole product. Then ask the agent:
 
 It should call `fhe_private_eval` and return `42`. No keys in chat. No localhost.
 
-After `npm publish`, the same paste with `@aurafhe/mcp` also works.
+Install is GitHub npx. `@aurafhe/mcp` is not on npm yet.
 
 ---
 

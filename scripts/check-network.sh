@@ -9,3 +9,8 @@ echo "TLS:"
 HOSTPORT="${API#https://}"
 HOST="${HOSTPORT%%:*}"
 echo | openssl s_client -connect "$HOSTPORT" -servername "$HOST" 2>/dev/null | openssl x509 -noout -subject -dates 2>/dev/null || true
+if curl -sS --max-time 8 "$API/health" >/dev/null 2>&1; then
+  echo "TLS: valid"
+else
+  echo "TLS: EXPIRED or untrusted — renew on the coprocessor host (MCP still connects to genesis)"
+fi

@@ -8,7 +8,7 @@ Please do not open public issues for security reports.
 
 ## MCP server
 
-`npx -y github:aurafhe-official/mcp` (or `@aurafhe/mcp` after npm) is an MCP server. Do not put secret key material in MCP env vars or chat. `AFHE_API_KEY` is an access token for the backend HTTP API, not the FHE secret.
+`npx -y github:aurafhe-official/mcp` is the MCP server (`@aurafhe/mcp` is not on npm yet). Do not put secret key material in MCP env vars or chat. `AFHE_API_KEY` is an access token for the backend HTTP API, not the FHE secret.
 
 Handles (`ct_…`) live in the MCP process. Ciphertext does not have to round-trip through the prompt. Reveal (`fhe_decrypt` / `reveal: true`) is the only step that returns plaintext to the model.
 
@@ -20,7 +20,7 @@ Handles (`ct_…`) live in the MCP process. Ciphertext does not have to round-tr
 | **PKB** | Compute side | Public-key material. |
 | **DictB** | Compute side | Evaluation material for homomorphic compute. |
 | Ciphertexts / MCP handles | Either side | Opaque without the SKB. |
-| Network channel | Public | Use TLS for transport confidentiality and integrity. |
+| Network channel | Public | Use TLS. Renew `api.afhe.io` — cert expired 28 Aug 2026. |
 
 ## What FHE protects
 

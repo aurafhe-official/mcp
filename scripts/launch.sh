@@ -33,7 +33,7 @@ else
 fi
 if gh api "repos/$OWNER/$REPO" >/dev/null 2>&1; then
   ok "github.com/$OWNER/$REPO exists"
-  todo "push: bash $ROOT/scripts/sync-mcp.sh"
+  todo "About fields: docs/GITHUB.md (Settings, as $OWNER)"
 else
   todo "browser: https://github.com/new  owner=$OWNER  name=$REPO  public  no README"
   printf '        then: bash %s/scripts/sync-mcp.sh\n' "$ROOT"
@@ -43,12 +43,11 @@ step "3. npm $PKG"
 if npm view "$PKG" version >/dev/null 2>&1; then
   ok "$PKG is on npm $(npm view "$PKG" version)"
 else
-  todo "npm org $NPM_SCOPE + npm publish --access public"
+  todo "not published — install stays github:aurafhe-official/mcp"
 fi
 
-step "4. Hosted MCP URL (optional)"
-todo "DNS mcp.afhe.io → docker compose -f deploy/compose.yml up"
-printf '        paste: {"mcpServers":{"aura":{"url":"https://mcp.afhe.io/mcp"}}}\n'
+step "4. Hosted MCP URL (optional, not live)"
+todo "only if you want a team URL: DNS mcp.afhe.io + deploy/compose.yml"
 
 step "5. What users paste"
 cat <<'JSON'

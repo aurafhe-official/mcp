@@ -20,6 +20,6 @@ claude mcp add aura -- npx -y github:aurafhe-official/mcp
 Claude Desktop: copy `claude-desktop.json` into `claude_desktop_config.json`.  
 VS Code: `vscode.json` (`type: stdio`).
 
-After npm publish you can swap the arg to `@aurafhe/mcp`.
+`@aurafhe/mcp` is not on npm yet. Keep `github:aurafhe-official/mcp`.
 
 [docs/STORY.md](../../docs/STORY.md) · [docs/LAUNCH.md](../../docs/LAUNCH.md)

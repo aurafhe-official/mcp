@@ -2,7 +2,7 @@
 
 This MCP server talks JSON over HTTPS to the AURA network. The contract is below.
 
-Production network: `https://api.afhe.io:8443`. Local operators: `https://localhost:8443`.
+Production network: `https://api.afhe.io:8443`. Local operators: `https://localhost:8443`. There is **no** `/mcp` route on the coprocessor.
 
 ---
 
@@ -229,12 +229,12 @@ Non-2xx responses always return:
 
 ## TLS
 
-Production deployments terminate TLS at the server. This MCP trusts genesis (`api.afhe.io`) and localhost. For other hosts, install a real certificate or set `AFHE_INSECURE_TLS=1`.
+Production should terminate TLS at the coprocessor. The Let's Encrypt cert on `api.afhe.io` expired **28 Aug 2026** — renew it on that host. Until then this MCP still connects (genesis TLS is trusted). For other hosts, install a real certificate or set `AFHE_INSECURE_TLS=1`.
 
 ---
 
 ## Versioning
 
 The protocol is versioned by `GET /health` payloads (an upcoming `version`
-field). Clients in this repo never break against a server with a newer minor
+field). This MCP never breaks against a server with a newer minor
 version — added endpoints / functions are simply not exercised.
