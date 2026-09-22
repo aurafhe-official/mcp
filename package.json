@@ -1,7 +1,7 @@
 {
   "name": "@aurafhe/mcp",
-  "version": "0.4.0",
-  "description": "MCP server for private AI compute. Add it to Cursor, Claude, or any host — the model never sees the data.",
+  "version": "0.5.0-rc.2",
+  "description": "Minimal MCP client for authenticated encrypted computation through Aura\u2019s coprocessor.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -11,22 +11,21 @@
   },
   "files": [
     "dist",
+    "docs/*.md",
+    "examples",
     "README.md",
+    "SECURITY.md",
     "LICENSE"
   ],
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsc && chmod +x dist/index.js",
+    "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "tsc && tsx --test src/*.test.ts",
-    "start": "node dist/index.js",
-    "connect": "tsx examples/connect/connect.ts",
-    "connect:github": "tsx examples/connect/connect.ts --github",
-    "check": "bash scripts/check-network.sh",
-    "launch": "bash scripts/launch.sh",
-    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js"
+    "test": "npm run build && node scripts/test.mjs",
+    "test:package": "node scripts/verify-package.mjs",
+    "start": "node dist/index.js"
   },
   "keywords": [
     "mcp-server",
@@ -54,16 +53,13 @@
   },
   "homepage": "https://afhe.io",
   "dependencies": {
-    "@modelcontextprotocol/server": "^2.0.0",
-    "zod": "^4.0.0"
-  },
-  "optionalDependencies": {
-    "undici": "^6.21.0"
+    "@modelcontextprotocol/server": "2.0.0",
+    "zod": "4.5.4"
   },
   "devDependencies": {
-    "@modelcontextprotocol/client": "^2.0.0",
-    "@types/node": "^22.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "22.20.1",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3"
   }
 }

@@ -1,25 +1,16 @@
 # Architecture
 
-```text
-MCP host (Cursor, Claude, VS Code, …)
-  ↓  MCP tools   npx -y github:aurafhe-official/mcp
-AURA MCP server
-  ↓  HTTPS + JSON
-Private-compute network
-```
+The MCP package is a thin authenticated client. A stdio connection receives a
+client session, opens a corresponding service session, and routes all dataset,
+computation, export and release work to the configured Aura gateway. Computation
+never runs locally and there is no alternate native backend.
 
-This repository is only the MCP server. Default network: `https://api.afhe.io:8443`. Story: [STORY.md](STORY.md).
+Only the public operation name and opaque authorized references cross this API.
+The private service translates that request into its internal execution. The
+MCP keeps random local handles so internal object references are not exposed to
+the model. Strict response schemas keep backend diagnostics and extra fields out
+of tool results. No process is spawned to execute engine code or read key files.
 
-## What the agent sees
-
-Tools, not key files:
-
-- `fhe_status` / `fhe_ops`
-- `fhe_private_eval` — one-shot private compute
-- `fhe_encrypt` / `fhe_compute` / `fhe_decrypt` — multi-step graphs with `ct_…` handles
-
-Handles live in the MCP process. Ciphertext does not have to round-trip through the prompt.
-
-## What the backend sees
-
-The HTTP contract in [PROTOCOL.md](PROTOCOL.md): health, encrypt, decrypt, generic `call`. This MCP maps agent op names (`add`, `mean`, `concat`) onto that contract.
+The private gateway and owner/recipient applications are required integration
+components. Their current endpoint/authorization contract must be verified or
+adapted to the proposed public contract before this candidate is deployed.

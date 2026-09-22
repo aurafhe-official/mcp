@@ -1,5 +1,5 @@
-# Examples
+# Client configuration
 
-[`mcp/`](./mcp/) — paste-ready configs for Cursor, Claude Desktop, and VS Code.
-
-[`connect/`](./connect/) — test project: spawn the MCP over stdio and privately add `25+17`.
+Follow [Setup](../docs/QUICKSTART.md). Configure service credentials through
+the host’s protected environment, never in committed examples or model context.
+The private gateway integration must be ready before these examples can run.

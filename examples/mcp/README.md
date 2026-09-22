@@ -1,25 +1,5 @@
-# Add AURA as an MCP server
+# Client configuration
 
-Paste this. Anyone can add it — no npm account, no local server.
-
-```json
-{
-  "mcpServers": {
-    "aura": {
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
-    }
-  }
-}
-```
-
-```bash
-claude mcp add aura -- npx -y github:aurafhe-official/mcp
-```
-
-Claude Desktop: copy `claude-desktop.json` into `claude_desktop_config.json`.  
-VS Code: `vscode.json` (`type: stdio`).
-
-`@aurafhe/mcp` is not on npm yet. Keep `github:aurafhe-official/mcp`.
-
-[docs/STORY.md](../../docs/STORY.md) · [docs/LAUNCH.md](../../docs/LAUNCH.md)
+Follow [Setup](../../docs/QUICKSTART.md). Configure service credentials through
+the host’s protected environment, never in committed examples or model context.
+The private gateway integration must be ready before these examples can run.

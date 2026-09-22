@@ -2,8 +2,10 @@
   "servers": {
     "aura": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
+      "command": "node",
+      "args": [
+        "/absolute/path/mcp/dist/index.js"
+      ]
     }
   }
 }

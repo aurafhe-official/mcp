@@ -1,46 +1,9 @@
-# Security policy
+# Security reporting
 
-## Reporting a vulnerability
+Report vulnerabilities privately to gen@afhe.io with the client version and a
+synthetic reproduction. Do not post credentials, source plaintext, keys, engine
+diagnostics, private source or deployment configuration in public issues.
 
-Email **security@afhe.io** with the details.
-
-Please do not open public issues for security reports.
-
-## MCP server
-
-`npx -y github:aurafhe-official/mcp` is the MCP server (`@aurafhe/mcp` is not on npm yet). Do not put secret key material in MCP env vars or chat. `AFHE_API_KEY` is an access token for the backend HTTP API, not the FHE secret.
-
-Handles (`ct_…`) live in the MCP process. Ciphertext does not have to round-trip through the prompt. Reveal (`fhe_decrypt` / `reveal: true`) is the only step that returns plaintext to the model.
-
-## Threat model
-
-| Asset | Held by | Trust assumption |
-|---|---|---|
-| **SKB** | Data owner | Anyone with it can decrypt ciphertexts created under that key. |
-| **PKB** | Compute side | Public-key material. |
-| **DictB** | Compute side | Evaluation material for homomorphic compute. |
-| Ciphertexts / MCP handles | Either side | Opaque without the SKB. |
-| Network channel | Public | Use TLS. Renew `api.afhe.io` — cert expired 28 Aug 2026. |
-
-## What FHE protects
-
-- plaintext values
-- encrypted intermediate state
-- encrypted outputs
-- the agent's prompt, when you keep values sealed and only reveal the final result
-
-## What FHE does not protect by itself
-
-- which operations were called
-- timing and other side channels
-- compromised endpoints
-- ciphertext authenticity or freshness
-
-Use signatures where authenticity matters.
-
-## Operational reminders
-
-- never share `SKB`
-- rotate keys deliberately
-- treat shared or demo key material as non-production
-- back up `SKB` securely
+The public MCP is an interface to Aura's authenticated coprocessor. See
+[Privacy boundary](docs/SECURITY-MODEL.md) and [Validation status](docs/VERIFICATION.md)
+for the distinction between client checks and complete-system guarantees.

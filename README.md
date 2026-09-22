@@ -1,140 +1,58 @@
-<p align="center">
-  <img src="./docs/assets/aura.png" alt="AURA" width="220">
-</p>
+# AURA MCP
 
-<p align="center">
-  <b>MCP server for private compute</b><br>
-  Add it to Cursor, Claude, or any host. The model never sees the data.
-</p>
+A minimal MCP client for encrypted computation through Aura's authenticated
+coprocessor. The public package contains tool definitions, reference validation,
+HTTPS transport and client tests. The computation engine stays in Aura's private
+service.
 
-<p align="center">
-  <a href="https://github.com/aurafhe-official/mcp"><img src="https://img.shields.io/badge/MCP-server-F5A623?style=flat-square&labelColor=111" alt="MCP"></a>
-  <a href="https://api.afhe.io:8443/health"><img src="https://img.shields.io/badge/genesis-live-2ea44f?style=flat-square&labelColor=111" alt="genesis live"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F5A623?style=flat-square&labelColor=111" alt="MIT"></a>
-  <a href="https://afhe.io"><img src="https://img.shields.io/badge/afhe.io-black?style=flat-square&labelColor=111" alt="afhe.io"></a>
-</p>
+**Integration candidate:** the service contract in this branch must be implemented
+or mapped by the private coprocessor gateway before deployment. Client tests use
+contract fixtures; they do not establish live-service compatibility or production
+cryptographic security. This candidate does not fall back to a local engine or
+the legacy plaintext API.
 
-```json
-{
-  "mcpServers": {
-    "aura": {
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
-    }
-  }
-}
+```text
+Owner application: encrypt and provision data
+        ↓ encrypted dataset reference
+Agent → AURA MCP client → authenticated Aura coprocessor
+        ↑ encrypted result reference
+Authorized recipient: retrieve and decrypt outside model context
 ```
 
-```bash
-npx -y github:aurafhe-official/mcp
-claude mcp add aura -- npx -y github:aurafhe-official/mcp
-npm run connect:github
+## Public tools
+
+| Tool | Purpose |
+| --- | --- |
+| `fhe_status` | Check the authenticated service session |
+| `fhe_ops` | List public operations enabled by the service |
+| `fhe_import` | Open a previously encrypted dataset by reference |
+| `fhe_compute` | Request remote computation on this session's handles |
+| `fhe_export` | Obtain an encrypted result reference for the recipient |
+| `fhe_release` | Release this session's references |
+
+The model receives handles, operation metadata and result references. No tools
+accept source plaintext, credentials, key files, raw engine functions or internal
+paths. The package contains no cryptographic implementation, native libraries,
+key-generation tooling, engine parameters or internal evaluation recipes.
+
+## Configuration
+
+Provision the gateway endpoint, service credential and authorized key reference
+outside the model. See [Setup](docs/QUICKSTART.md) and the [public service contract](docs/PROTOCOL.md).
+HTTPS certificate verification is mandatory. Shared inbound HTTP is not exposed
+by this package; each stdio connection opens its own service session.
+
+```sh
+npm ci --ignore-scripts --no-audit --no-fund
+npm test
+npm run test:package
 ```
 
-That is the whole product. Then ask the agent:
+[Privacy boundary](docs/SECURITY-MODEL.md) · [Architecture](docs/ARCHITECTURE.md) ·
+[Migration](docs/MIGRATION.md) · [Validation](docs/VERIFICATION.md)
 
-> Privately add 25 and 17.
-
-It should call `fhe_private_eval` and return `42`. No keys in chat. No localhost.
-
-Install is GitHub npx. `@aurafhe/mcp` is not on npm yet.
-
----
-
-<details>
-<summary><b>Cursor · Claude · VS Code</b></summary>
-
-**Cursor** — `.cursor/mcp.json` or `~/.cursor/mcp.json`
-
-```json
-{
-  "mcpServers": {
-    "aura": {
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
-    }
-  }
-}
-```
-
-**Claude Code**
-
-```bash
-claude mcp add aura -- npx -y github:aurafhe-official/mcp
-```
-
-**Claude Desktop** — paste [`examples/mcp/claude-desktop.json`](examples/mcp/claude-desktop.json) into `claude_desktop_config.json`.
-
-**VS Code Copilot** — `.vscode/mcp.json`
-
-```json
-{
-  "servers": {
-    "aura": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
-    }
-  }
-}
-```
-
-**HTTP** (one URL for a team)
-
-```bash
-npx -y github:aurafhe-official/mcp --http --port 8787
-```
-
-</details>
-
-<details>
-<summary><b>Tools the agent gets</b></summary>
-
-| Tool | What the agent uses it for |
-|---|---|
-| `fhe_status` | Is this MCP online? |
-| `fhe_ops` | Which private ops can I call? |
-| `fhe_private_eval` | **Main tool.** Seal → run → optional reveal |
-| `fhe_encrypt` / `fhe_compute` / `fhe_decrypt` | Multi-step graphs with `ct_…` handles |
-
-Live ops: add, mean, compare, concat, scientific. Retrieval, SQL, and inference are roadmap.
-
-```json
-{
-  "name": "fhe_private_eval",
-  "arguments": {
-    "domain": "int",
-    "op": "mean",
-    "values": [81, 94, 73],
-    "reveal": true
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>Why MCP</b></summary>
-
-Agents already speak **tools**. AURA is one more MCP server: the host seals inputs, the network computes, the agent only receives handles (`ct_…`) or the final answer.
-
-1. Encrypt at the owner
-2. Compute on ciphertext
-3. Decrypt only at the recipient
-
-Existing agents migrate in. No rebuild. Story: [docs/STORY.md](docs/STORY.md).
-
-Zero-config talks to genesis: [`https://api.afhe.io:8443`](https://api.afhe.io:8443/health)
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `AFHE_API_URL` | `https://api.afhe.io:8443` | Backend |
-| `AFHE_API_KEY` | — | Bearer token if required |
-| `AFHE_TIMEOUT_MS` | `120000` | Per-request timeout |
-| `AFHE_INSECURE_TLS` | genesis + localhost | Set `0` to require a valid certificate |
-
-</details>
-
-<p align="center">
-  MIT · Mochi Labs · <a href="mailto:gen@afhe.io">gen@afhe.io</a> · <a href="https://github.com/aurafhe-official/mcp">github.com/aurafhe-official/mcp</a>
-</p>
+The engine can remain proprietary while ciphertext computation is offered through
+an API. Data privacy additionally depends on owner-side encryption, recipient-side
+decryption, backend authorization and the security of the deployed cryptosystem.
+Sending source values or secret keys to the compute service would change that
+privacy boundary. Keeping source code private alone does not establish it.

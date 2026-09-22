@@ -1,27 +1,16 @@
 ---
 name: Bug report
-about: Report a problem with the AURA MCP server
+about: Report a public client problem using synthetic data
 title: "[BUG] "
 labels: bug
-assignees: ''
 ---
 
-**Which surface**: MCP (`github:aurafhe-official/mcp`)
+**Client version / commit:**
 
-**Coprocessor**: `https://api.afhe.io:8443` (or your `AFHE_API_URL`)
+**Environment:** OS, Node version, MCP host
 
-**Reproduction**:
-```
-<smallest possible code or command that fails>
-```
+**Synthetic reproduction and expected behavior:**
 
-**Expected**: 
+**Public client error code:**
 
-**Actual**: 
-
-**Logs / error message**:
-```
-<paste here>
-```
-
-**Environment**: OS, Node version, MCP host (Cursor / Claude / VS Code / other).
+Do not include credentials, plaintext, keys, engine diagnostics or private server configuration.

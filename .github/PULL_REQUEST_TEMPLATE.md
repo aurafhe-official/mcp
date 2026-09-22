@@ -1,17 +1,10 @@
-## What this changes
+## What changes
 
-<!-- One paragraph. What problem does the PR solve? -->
+<!-- Describe the public client behavior and service contract compatibility. -->
 
-## How
+## Validation
 
-<!-- Which MCP files / docs are affected? -->
-
-## Testing
-
-- [ ] Unit tests added or updated
-- [ ] Smoke-tested against genesis (`https://api.afhe.io:8443/health`) or a local node
-- [ ] Docs updated (`README.md`, `docs/`)
-
-## Notes for reviewers
-
-<!-- Anything tricky, deferred, or unresolved. -->
+- [ ] Client tests and packaging checks pass
+- [ ] Build output matches source
+- [ ] No private engine or deployment information added
+- [ ] Live service integration status is stated separately from fixture tests
