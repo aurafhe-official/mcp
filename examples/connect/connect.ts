@@ -14,19 +14,19 @@ export function stdioEnv(extra: Record<string, string> = {}): Record<string, str
   return { ...getDefaultEnvironment(), ...extra }
 }
 
-export function localAura(opts: { bin?: string; env?: Record<string, string> } = {}): StdioServerParameters {
+export function localAura(opts: { bin?: string; env?: Record<string, string>; trustedDemo?: boolean } = {}): StdioServerParameters {
   return {
     command: process.execPath,
-    args: [opts.bin ?? path.join(root, 'dist', 'index.js')],
+    args: [opts.bin ?? path.join(root, 'dist', 'index.js'), ...(opts.trustedDemo ? ['--trusted-demo'] : [])],
     cwd: root,
     env: stdioEnv(opts.env),
   }
 }
 
-export function githubAura(opts: { env?: Record<string, string> } = {}): StdioServerParameters {
+export function githubAura(opts: { env?: Record<string, string>; trustedDemo?: boolean } = {}): StdioServerParameters {
   return {
     command: 'npx',
-    args: ['-y', 'github:aurafhe-official/mcp'],
+    args: ['-y', 'github:aurafhe-official/mcp', ...(opts.trustedDemo ? ['--trusted-demo'] : [])],
     env: stdioEnv(opts.env),
   }
 }
@@ -71,7 +71,7 @@ export async function privateEval(
 
 async function main() {
   const github = process.argv.includes('--github')
-  const aura = await openAura(github ? githubAura() : localAura(), github ? 180_000 : 20_000)
+  const aura = await openAura(github ? githubAura({ trustedDemo: true }) : localAura({ trustedDemo: true }), github ? 180_000 : 20_000)
   try {
     const info = aura.client.getServerVersion()
     const { tools } = await aura.client.listTools()

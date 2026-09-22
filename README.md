@@ -1,140 +1,55 @@
-<p align="center">
-  <img src="./docs/assets/aura.png" alt="AURA" width="220">
-</p>
+# AURA MCP
 
-<p align="center">
-  <b>MCP server for private compute</b><br>
-  Add it to Cursor, Claude, or any host. The model never sees the data.
-</p>
+![AURA](docs/assets/aura.png)
 
-<p align="center">
-  <a href="https://github.com/aurafhe-official/mcp"><img src="https://img.shields.io/badge/MCP-server-F5A623?style=flat-square&labelColor=111" alt="MCP"></a>
-  <a href="https://api.afhe.io:8443/health"><img src="https://img.shields.io/badge/genesis-live-2ea44f?style=flat-square&labelColor=111" alt="genesis live"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F5A623?style=flat-square&labelColor=111" alt="MIT"></a>
-  <a href="https://afhe.io"><img src="https://img.shields.io/badge/afhe.io-black?style=flat-square&labelColor=111" alt="afhe.io"></a>
-</p>
+**Diagnostic preview — synthetic data only. The supplied native engine has not passed the confidentiality release gate. Working arithmetic is not evidence that the compute provider cannot recover inputs.**
+
+This MCP server lets agents compute with encrypted input handles. The owner prepares inputs and decrypts results in a separate trusted application. The default MCP tools accept handles only: `fhe_status`, `fhe_inputs`, `fhe_ops`, `fhe_compute`, and `fhe_export_result`.
+
+The previous encryption/decryption tools exposed plaintext to the model and backend. They are available only through explicit `--trusted-demo` for synthetic compatibility demonstrations. Shared HTTP mode is disabled.
+
+## Install and run
+
+This preview is not on npm yet. Install from the verified repository:
+
+```sh
+git clone https://github.com/aurafhe-official/mcp.git
+cd mcp
+npm ci
+npm run build
+npm test
+```
+
+Alternatively, `npx -y github:aurafhe-official/mcp` starts the tool catalog; supply the configuration below before computing.
+
+For an MCP host, use absolute paths and a compute-only credential:
 
 ```json
 {
   "mcpServers": {
     "aura": {
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
+      "command": "node",
+      "args": ["/absolute/path/mcp/dist/index.js"],
+      "env": {
+        "AFHE_INPUT_BUNDLE": "/absolute/path/encrypted-inputs.json",
+        "AFHE_COMPUTE_URL": "http://127.0.0.1:8082",
+        "AFHE_COMPUTE_API_KEY": "COMPUTE_TOKEN",
+        "AFHE_KEY_ID": "SHA256_OF_PUBLIC_KEY_FILE",
+        "AFHE_RESULT_DIR": "/absolute/path/encrypted-results"
+      }
     }
   }
 }
 ```
 
-```bash
-npx -y github:aurafhe-official/mcp
-claude mcp add aura -- npx -y github:aurafhe-official/mcp
-npm run connect:github
-```
+Without configuration the server lists its tools and reports `configured:false`. It does not silently connect to a public backend. See [the complete setup](docs/QUICKSTART.md), including the native adapter and separate owner CLI.
 
-That is the whole product. Then ask the agent:
+## Verified behavior and limits
 
-> Privately add 25 and 17.
+The supplied Linux native library completed owner encryption → separate compute process → actual stdio MCP tools → encrypted export → owner decryption. Integer addition, subtraction, multiplication and division, and a floating-point sum/mean were checked against expected values. This is a functional integration check, not cryptographic certification.
 
-It should call `fhe_private_eval` and return `42`. No keys in chat. No localhost.
+Only numeric `int` and `float` arithmetic is exposed in the default MCP. One owner/key per process; random process-local handles; one-hour expiry; bounded inputs and responses. The owner and worker must be isolated by OS permissions or separate machines. Different ports alone do not isolate files, environment variables, or credentials from an agent with shell access.
 
-Install is GitHub npx. `@aurafhe/mcp` is not on npm yet.
+The input/result key identifier is a routing check, not authentication or a proof of correct computation. Result decryption is an explicit owner action; review the requested computation and avoid publishing arbitrary decryption responses. No multi-tenant service, audited cryptographic parameters, unrestricted computation depth, browser-local crypto, or verifiable computation is provided.
 
----
-
-<details>
-<summary><b>Cursor · Claude · VS Code</b></summary>
-
-**Cursor** — `.cursor/mcp.json` or `~/.cursor/mcp.json`
-
-```json
-{
-  "mcpServers": {
-    "aura": {
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
-    }
-  }
-}
-```
-
-**Claude Code**
-
-```bash
-claude mcp add aura -- npx -y github:aurafhe-official/mcp
-```
-
-**Claude Desktop** — paste [`examples/mcp/claude-desktop.json`](examples/mcp/claude-desktop.json) into `claude_desktop_config.json`.
-
-**VS Code Copilot** — `.vscode/mcp.json`
-
-```json
-{
-  "servers": {
-    "aura": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "github:aurafhe-official/mcp"]
-    }
-  }
-}
-```
-
-**HTTP** (one URL for a team)
-
-```bash
-npx -y github:aurafhe-official/mcp --http --port 8787
-```
-
-</details>
-
-<details>
-<summary><b>Tools the agent gets</b></summary>
-
-| Tool | What the agent uses it for |
-|---|---|
-| `fhe_status` | Is this MCP online? |
-| `fhe_ops` | Which private ops can I call? |
-| `fhe_private_eval` | **Main tool.** Seal → run → optional reveal |
-| `fhe_encrypt` / `fhe_compute` / `fhe_decrypt` | Multi-step graphs with `ct_…` handles |
-
-Live ops: add, mean, compare, concat, scientific. Retrieval, SQL, and inference are roadmap.
-
-```json
-{
-  "name": "fhe_private_eval",
-  "arguments": {
-    "domain": "int",
-    "op": "mean",
-    "values": [81, 94, 73],
-    "reveal": true
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>Why MCP</b></summary>
-
-Agents already speak **tools**. AURA is one more MCP server: the host seals inputs, the network computes, the agent only receives handles (`ct_…`) or the final answer.
-
-1. Encrypt at the owner
-2. Compute on ciphertext
-3. Decrypt only at the recipient
-
-Existing agents migrate in. No rebuild. Story: [docs/STORY.md](docs/STORY.md).
-
-Zero-config talks to genesis: [`https://api.afhe.io:8443`](https://api.afhe.io:8443/health)
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `AFHE_API_URL` | `https://api.afhe.io:8443` | Backend |
-| `AFHE_API_KEY` | — | Bearer token if required |
-| `AFHE_TIMEOUT_MS` | `120000` | Per-request timeout |
-| `AFHE_INSECURE_TLS` | genesis + localhost | Set `0` to require a valid certificate |
-
-</details>
-
-<p align="center">
-  MIT · Mochi Labs · <a href="mailto:gen@afhe.io">gen@afhe.io</a> · <a href="https://github.com/aurafhe-official/mcp">github.com/aurafhe-official/mcp</a>
-</p>
+The native binary is supplied separately and is not covered by this repository's MIT license. See [native compatibility](native/README.md), [security](SECURITY.md), and [release status](release-status.json).

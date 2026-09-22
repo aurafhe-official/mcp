@@ -1,46 +1,11 @@
 # Security policy
 
-## Reporting a vulnerability
+Report privately to security@afhe.io; do not publish vulnerability details in issues.
 
-Email **security@afhe.io** with the details.
+**Diagnostic preview — synthetic data only. The supplied native engine has not passed the confidentiality release gate. Working arithmetic is not evidence that the compute provider cannot recover inputs.**
 
-Please do not open public issues for security reports.
+The default MCP has no plaintext-input, encryption, decryption or arbitrary-file tools. It imports an owner-prepared ciphertext bundle, sends arithmetic to a separate worker, and exports encrypted results. The owner CLI is a separate trusted application and must never be exposed as an agent tool. `--trusted-demo` retains the former trusted-backend mode and is unsuitable for confidential data.
 
-## MCP server
+The native engine's confidentiality release gate is blocked. Restricting the adapter's routes is not a proof that an operator holding the native binary and evaluation material cannot recover inputs. Engine repair and independent review are required before privacy claims or real-data deployment.
 
-`npx -y github:aurafhe-official/mcp` is the MCP server (`@aurafhe/mcp` is not on npm yet). Do not put secret key material in MCP env vars or chat. `AFHE_API_KEY` is an access token for the backend HTTP API, not the FHE secret.
-
-Handles (`ct_…`) live in the MCP process. Ciphertext does not have to round-trip through the prompt. Reveal (`fhe_decrypt` / `reveal: true`) is the only step that returns plaintext to the model.
-
-## Threat model
-
-| Asset | Held by | Trust assumption |
-|---|---|---|
-| **SKB** | Data owner | Anyone with it can decrypt ciphertexts created under that key. |
-| **PKB** | Compute side | Public-key material. |
-| **DictB** | Compute side | Evaluation material for homomorphic compute. |
-| Ciphertexts / MCP handles | Either side | Opaque without the SKB. |
-| Network channel | Public | Use TLS. Renew `api.afhe.io` — cert expired 28 Aug 2026. |
-
-## What FHE protects
-
-- plaintext values
-- encrypted intermediate state
-- encrypted outputs
-- the agent's prompt, when you keep values sealed and only reveal the final result
-
-## What FHE does not protect by itself
-
-- which operations were called
-- timing and other side channels
-- compromised endpoints
-- ciphertext authenticity or freshness
-
-Use signatures where authenticity matters.
-
-## Operational reminders
-
-- never share `SKB`
-- rotate keys deliberately
-- treat shared or demo key material as non-production
-- back up `SKB` securely
+Before production: validate the scheme and parameters, review evaluation-key leakage, isolate owner storage and credentials, authenticate inputs/results and ownership, implement computation authorization and resource limits, validate circuit depth and arithmetic ranges, and test key rotation and deletion. The result key tag is not cryptographic authentication or a correctness proof. No production sign-off is given by this repository's tests.

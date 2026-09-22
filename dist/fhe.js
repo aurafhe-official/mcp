@@ -1,6 +1,5 @@
 /** Genesis coprocessor — the hosted AURA network agents connect to by default. */
 export const DEFAULT_COPROCESSOR_URL = 'https://api.afhe.io:8443';
-const GENESIS_HOSTS = new Set(['api.afhe.io']);
 const DOMAIN_FNS = {
     add: { int: 'AddCipherInt', float: 'AddCipherFloat' },
     sub: { int: 'SubstractCipherInt', float: 'SubstractCipherFloat' },
@@ -42,7 +41,6 @@ const AI_OPS = [
     { name: 'mul', domains: ['int', 'float'], arity: 2, summary: 'Private product. Foldable over many values.' },
     { name: 'div', domains: ['int', 'float'], arity: 2, summary: 'Private divide.' },
     { name: 'mean', domains: ['int', 'float'], arity: 2, summary: 'Private mean of many numbers.' },
-    { name: 'compare', domains: ['int', 'float', 'string', 'binary'], arity: 2, summary: 'Private compare. Result stays sealed.' },
     { name: 'abs', domains: ['int', 'float'], arity: 1, summary: 'Private absolute value.' },
     { name: 'concat', domains: ['string'], arity: 2, summary: 'Private string concat. Foldable.' },
     { name: 'not', domains: ['binary'], arity: 1, summary: 'Private NOT.' },
@@ -56,9 +54,18 @@ const AI_OPS = [
     { name: 'cos', domains: ['float'], arity: 1, summary: 'Private cos.' },
     { name: 'tan', domains: ['float'], arity: 1, summary: 'Private tan.' },
 ];
-export function resolveOp(op, domain, _arity = 2) {
-    if (/^[A-Z]/.test(op) || op.includes('Cipher'))
-        return op;
+export function resolveOp(op, domain, arity = 2) {
+    const info = AI_OPS.find((candidate) => candidate.name === op ||
+        DOMAIN_FNS[candidate.name]?.[domain] === op || ANY_FNS[candidate.name] === op);
+    if (!info)
+        throw new Error(`unknown op "${op}" for domain ${domain}; use fhe_ops`);
+    if (!info.domains.includes(domain))
+        throw new Error(`unsupported domain ${domain} for ${info.name}`);
+    const foldable = ['add', 'mul', 'concat', 'mean'].includes(info.name);
+    if (arity < 1 || (!foldable && arity !== info.arity)) {
+        throw new Error(`${info.name} requires ${foldable ? 'at least one input' : `${info.arity} inputs`}`);
+    }
+    op = info.name;
     if (op === 'mean')
         return DOMAIN_FNS.div[domain] ?? 'DivideCipherFloat';
     const mapped = DOMAIN_FNS[op]?.[domain] ?? ANY_FNS[op];
@@ -74,7 +81,7 @@ export class FheSession {
         this.fhe = fhe;
     }
     ops() {
-        return AI_OPS;
+        return AI_OPS.map((op) => ({ ...op, domains: [...op.domains] }));
     }
     async status() {
         const health = await this.fhe.health();
@@ -97,23 +104,29 @@ export class FheSession {
         return { plaintext, domain: stored.domain, handle };
     }
     async compute(opts) {
+        resolveOp(opts.op, opts.domain, opts.inputs.length);
         if (opts.op === 'mean') {
             return this.privateEval({
                 domain: opts.domain,
                 op: 'mean',
                 values: opts.inputs,
                 reveal: opts.reveal,
+                raw: opts.raw,
                 sealedInputs: true,
             });
         }
+        this.validateHandles(opts.domain, opts.inputs);
         const sealed = await Promise.all(opts.inputs.map((input) => this.sealInput(opts.domain, input)));
         const fn = resolveOp(opts.op, opts.domain, sealed.length);
         const ciphertext = await this.fold(fn, sealed);
         return this.finish(opts.domain, fn, ciphertext, opts.reveal, opts.raw);
     }
     async privateEval(opts) {
+        resolveOp(opts.op, opts.domain, opts.values.length);
         const domain = opts.op === 'mean' && opts.domain === 'int' ? 'float' : opts.domain;
-        const sealed = await Promise.all(opts.values.map((value) => this.sealInput(domain, value, opts.sealedInputs)));
+        if (opts.sealedInputs)
+            this.validateHandles(domain, opts.values);
+        const sealed = await Promise.all(opts.values.map((value) => this.sealInput(domain, value, opts.sealedInputs ?? false)));
         if (opts.op === 'mean') {
             const sumFn = resolveOp('add', domain, 2);
             const sum = await this.fold(sumFn, sealed);
@@ -127,10 +140,22 @@ export class FheSession {
         return this.finish(opts.domain, fn, ciphertext, opts.reveal, opts.raw);
     }
     async sealInput(domain, input, allowHandle = true) {
-        if (allowHandle && typeof input === 'string' && this.store.has(input)) {
-            return this.lookup(input).ciphertext;
+        if (allowHandle && typeof input === 'string' && input.startsWith('ct_')) {
+            const stored = this.lookup(input);
+            if (stored.domain !== domain)
+                throw new Error(`handle domain mismatch: expected ${domain}, got ${stored.domain}; mean requires float handles`);
+            return stored.ciphertext;
         }
         return this.fhe.encrypt(domain, String(input));
+    }
+    validateHandles(domain, inputs) {
+        for (const input of inputs) {
+            if (typeof input !== 'string' || !input.startsWith('ct_'))
+                continue;
+            const stored = this.lookup(input);
+            if (stored.domain !== domain)
+                throw new Error(`handle domain mismatch: expected ${domain}, got ${stored.domain}; mean requires float handles`);
+        }
     }
     async fold(fn, args) {
         if (args.length === 0)
@@ -161,21 +186,6 @@ export class FheSession {
         return stored;
     }
 }
-function hostnameOf(url) {
-    try {
-        return new URL(url).hostname;
-    }
-    catch {
-        return '';
-    }
-}
-function isLocalhost(url) {
-    const host = hostnameOf(url);
-    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
-}
-function isGenesis(url) {
-    return GENESIS_HOSTS.has(hostnameOf(url));
-}
 async function buildFetch(baseUrl, insecure, provided) {
     if (provided)
         return provided;
@@ -197,7 +207,7 @@ export function createHttpCoprocessor(opts) {
     if (opts.apiKey)
         headers.authorization = `Bearer ${opts.apiKey}`;
     const timeoutMs = opts.timeoutMs ?? 120_000;
-    const insecureTLS = opts.insecureTLS ?? (isLocalhost(baseUrl) || isGenesis(baseUrl));
+    const insecureTLS = opts.insecureTLS ?? false;
     let fetchImpl = opts.fetch;
     const ready = buildFetch(baseUrl, insecureTLS, opts.fetch).then((fn) => {
         fetchImpl = fn;
@@ -229,6 +239,12 @@ export function createHttpCoprocessor(opts) {
         }
         return parsed;
     }
+    function stringField(value, field) {
+        if (!value || typeof value !== 'object' || typeof value[field] !== 'string') {
+            throw new Error(`invalid backend response: expected string ${field}`);
+        }
+        return value[field];
+    }
     const fhe = {
         url: baseUrl,
         health: () => request('GET', '/health'),
@@ -238,15 +254,15 @@ export function createHttpCoprocessor(opts) {
                 value: String(value),
                 public: pub,
             });
-            return res.ciphertext;
+            return stringField(res, 'ciphertext');
         },
         decrypt: async (domain, ciphertext) => {
             const res = await request('POST', `/decrypt/${domain}`, { ciphertext });
-            return res.plaintext;
+            return stringField(res, 'plaintext');
         },
         call: async (fn, args) => {
             const res = await request('POST', '/call', { fn, args });
-            return res.result;
+            return stringField(res, 'result');
         },
         async connect() {
             const health = await request('GET', '/health', undefined, 3_000);
