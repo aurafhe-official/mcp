@@ -24,7 +24,7 @@ export interface OpInfo {
     arity: number;
     summary: string;
 }
-export declare function resolveOp(op: string, domain: Domain, _arity?: number): string;
+export declare function resolveOp(op: string, domain: Domain, arity?: number): string;
 export declare class FheSession {
     private readonly fhe;
     private store;
@@ -79,6 +79,7 @@ export declare class FheSession {
         ciphertext: string | undefined;
     }>;
     private sealInput;
+    private validateHandles;
     private fold;
     private finish;
     private remember;

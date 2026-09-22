@@ -1,0 +1,7 @@
+{
+  "status": "diagnostic-preview",
+  "productionReady": false,
+  "confidentialityGate": "blocked",
+  "nativeBuildSha256": "fbb26df9df8ec58e150c21eb3acc0c646c02d0b4ac408e39930681aa2938f28a",
+  "scope": "synthetic data; owner/compute integration only"
+}

@@ -1,31 +1,18 @@
+# Diagnostic stdio only: docker compose run --rm -T mcp
+# Set host UID/GID and grant this identity access to ciphertext-only mounts.
 services:
   mcp:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
+    user: "${AURA_UID:-1000}:${AURA_GID:-1000}"
+    stdin_open: true
     environment:
-      AFHE_API_URL: ${AFHE_API_URL:-https://api.afhe.io:8443}
-      AFHE_API_KEY: ${AFHE_API_KEY:-}
-    ports:
-      - "8787:8787"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/healthz').then(r=>process.exit(r.ok?0:1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  caddy:
-    image: caddy:2
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+      AFHE_INPUT_BUNDLE: /inputs/encrypted-inputs.json
+      AFHE_RESULT_DIR: /results
+      AFHE_COMPUTE_URL: ${AFHE_COMPUTE_URL:?Set verified HTTPS worker URL}
+      AFHE_COMPUTE_API_KEY: ${AFHE_COMPUTE_API_KEY:?Set compute-only token}
+      AFHE_KEY_ID: ${AFHE_KEY_ID:?Set key ID}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-    depends_on:
-      - mcp
-
-volumes:
-  caddy_data:
+      - ${AURA_ENCRYPTED_INPUT_DIR:?Set ciphertext input directory}:/inputs:ro
+      - ${AURA_ENCRYPTED_RESULT_DIR:?Set ciphertext output directory}:/results

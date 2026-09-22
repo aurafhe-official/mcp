@@ -1,3 +1,1 @@
-mcp.afhe.io {
-  reverse_proxy mcp:8787
-}
+# Shared HTTP MCP hosting is disabled. This preview uses isolated stdio processes.

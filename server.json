@@ -2,34 +2,52 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
   "name": "io.github.aurafhe-official/mcp",
   "title": "AURA MCP",
-  "description": "MCP server for private compute. Add it to any agent host — the model never sees the data.",
+  "description": "Ciphertext-only MCP developer preview. Owner encrypts and decrypts separately; native engine confidentiality review is blocked.",
   "repository": {
     "url": "https://github.com/aurafhe-official/mcp",
     "source": "github"
   },
-  "version": "0.4.0",
+  "version": "0.5.0-preview.1",
   "websiteUrl": "https://afhe.io",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@aurafhe/mcp",
-      "version": "0.4.0",
+      "version": "0.5.0-preview.1",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
-          "name": "AFHE_API_URL",
-          "description": "Override the private-compute backend. Default is https://api.afhe.io:8443",
-          "isRequired": false,
+          "name": "AFHE_INPUT_BUNDLE",
+          "description": "Absolute path to owner-prepared ciphertext bundle",
+          "isRequired": true,
           "format": "string"
         },
         {
-          "name": "AFHE_API_KEY",
-          "description": "Optional bearer token",
-          "isRequired": false,
+          "name": "AFHE_COMPUTE_URL",
+          "description": "Compute-only origin; verified HTTPS outside literal loopback",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "AFHE_COMPUTE_API_KEY",
+          "description": "Compute-only bearer token; never an owner token",
+          "isRequired": true,
           "format": "string",
           "isSecret": true
+        },
+        {
+          "name": "AFHE_KEY_ID",
+          "description": "Configured key routing identifier",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "AFHE_RESULT_DIR",
+          "description": "Absolute directory for encrypted results",
+          "isRequired": true,
+          "format": "string"
         }
       ]
     }
