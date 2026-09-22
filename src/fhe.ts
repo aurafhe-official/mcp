@@ -3,8 +3,6 @@ export type Domain = 'int' | 'float' | 'string' | 'binary'
 /** Genesis coprocessor — the hosted AURA network agents connect to by default. */
 export const DEFAULT_COPROCESSOR_URL = 'https://api.afhe.io:8443'
 
-const GENESIS_HOSTS = new Set(['api.afhe.io'])
-
 export interface Coprocessor {
   url?: string
   health(): Promise<{ status: string }>
@@ -71,7 +69,6 @@ const AI_OPS: OpInfo[] = [
   { name: 'mul', domains: ['int', 'float'], arity: 2, summary: 'Private product. Foldable over many values.' },
   { name: 'div', domains: ['int', 'float'], arity: 2, summary: 'Private divide.' },
   { name: 'mean', domains: ['int', 'float'], arity: 2, summary: 'Private mean of many numbers.' },
-  { name: 'compare', domains: ['int', 'float', 'string', 'binary'], arity: 2, summary: 'Private compare. Result stays sealed.' },
   { name: 'abs', domains: ['int', 'float'], arity: 1, summary: 'Private absolute value.' },
   { name: 'concat', domains: ['string'], arity: 2, summary: 'Private string concat. Foldable.' },
   { name: 'not', domains: ['binary'], arity: 1, summary: 'Private NOT.' },
@@ -86,8 +83,16 @@ const AI_OPS: OpInfo[] = [
   { name: 'tan', domains: ['float'], arity: 1, summary: 'Private tan.' },
 ]
 
-export function resolveOp(op: string, domain: Domain, _arity = 2): string {
-  if (/^[A-Z]/.test(op) || op.includes('Cipher')) return op
+export function resolveOp(op: string, domain: Domain, arity = 2): string {
+  const info = AI_OPS.find((candidate) => candidate.name === op ||
+    DOMAIN_FNS[candidate.name]?.[domain] === op || ANY_FNS[candidate.name] === op)
+  if (!info) throw new Error(`unknown op "${op}" for domain ${domain}; use fhe_ops`)
+  if (!info.domains.includes(domain)) throw new Error(`unsupported domain ${domain} for ${info.name}`)
+  const foldable = ['add', 'mul', 'concat', 'mean'].includes(info.name)
+  if (arity < 1 || (!foldable && arity !== info.arity)) {
+    throw new Error(`${info.name} requires ${foldable ? 'at least one input' : `${info.arity} inputs`}`)
+  }
+  op = info.name
   if (op === 'mean') return DOMAIN_FNS.div[domain] ?? 'DivideCipherFloat'
   const mapped = DOMAIN_FNS[op]?.[domain] ?? ANY_FNS[op]
   if (!mapped) throw new Error(`unknown op "${op}" for domain ${domain}`)
@@ -103,7 +108,7 @@ export class FheSession {
   constructor(private readonly fhe: Coprocessor) {}
 
   ops(): OpInfo[] {
-    return AI_OPS
+    return AI_OPS.map((op) => ({ ...op, domains: [...op.domains] }))
   }
 
   async status() {
@@ -136,15 +141,18 @@ export class FheSession {
     reveal?: boolean
     raw?: boolean
   }) {
+    resolveOp(opts.op, opts.domain, opts.inputs.length)
     if (opts.op === 'mean') {
       return this.privateEval({
         domain: opts.domain,
         op: 'mean',
         values: opts.inputs,
         reveal: opts.reveal,
+        raw: opts.raw,
         sealedInputs: true,
       })
     }
+    this.validateHandles(opts.domain, opts.inputs)
     const sealed = await Promise.all(opts.inputs.map((input) => this.sealInput(opts.domain, input)))
     const fn = resolveOp(opts.op, opts.domain, sealed.length)
     const ciphertext = await this.fold(fn, sealed)
@@ -159,9 +167,11 @@ export class FheSession {
     raw?: boolean
     sealedInputs?: boolean
   }) {
+    resolveOp(opts.op, opts.domain, opts.values.length)
     const domain: Domain = opts.op === 'mean' && opts.domain === 'int' ? 'float' : opts.domain
+    if (opts.sealedInputs) this.validateHandles(domain, opts.values)
     const sealed = await Promise.all(
-      opts.values.map((value) => this.sealInput(domain, value, opts.sealedInputs)),
+      opts.values.map((value) => this.sealInput(domain, value, opts.sealedInputs ?? false)),
     )
     if (opts.op === 'mean') {
       const sumFn = resolveOp('add', domain, 2)
@@ -177,10 +187,20 @@ export class FheSession {
   }
 
   private async sealInput(domain: Domain, input: string | number, allowHandle = true) {
-    if (allowHandle && typeof input === 'string' && this.store.has(input)) {
-      return this.lookup(input).ciphertext
+    if (allowHandle && typeof input === 'string' && input.startsWith('ct_')) {
+      const stored = this.lookup(input)
+      if (stored.domain !== domain) throw new Error(`handle domain mismatch: expected ${domain}, got ${stored.domain}; mean requires float handles`)
+      return stored.ciphertext
     }
     return this.fhe.encrypt(domain, String(input))
+  }
+
+  private validateHandles(domain: Domain, inputs: Array<string | number>) {
+    for (const input of inputs) {
+      if (typeof input !== 'string' || !input.startsWith('ct_')) continue
+      const stored = this.lookup(input)
+      if (stored.domain !== domain) throw new Error(`handle domain mismatch: expected ${domain}, got ${stored.domain}; mean requires float handles`)
+    }
   }
 
   private async fold(fn: string, args: string[]) {
@@ -221,23 +241,6 @@ export interface HttpCoprocessorOptions {
   keys?: { skb?: string; pkb?: string; dictb?: string }
 }
 
-function hostnameOf(url: string): string {
-  try {
-    return new URL(url).hostname
-  } catch {
-    return ''
-  }
-}
-
-function isLocalhost(url: string): boolean {
-  const host = hostnameOf(url)
-  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
-}
-
-function isGenesis(url: string): boolean {
-  return GENESIS_HOSTS.has(hostnameOf(url))
-}
-
 async function buildFetch(baseUrl: string, insecure: boolean, provided?: typeof fetch): Promise<typeof fetch> {
   if (provided) return provided
   const fallback = globalThis.fetch.bind(globalThis)
@@ -257,7 +260,7 @@ export function createHttpCoprocessor(opts: HttpCoprocessorOptions): HttpCoproce
   const headers: Record<string, string> = {}
   if (opts.apiKey) headers.authorization = `Bearer ${opts.apiKey}`
   const timeoutMs = opts.timeoutMs ?? 120_000
-  const insecureTLS = opts.insecureTLS ?? (isLocalhost(baseUrl) || isGenesis(baseUrl))
+  const insecureTLS = opts.insecureTLS ?? false
   let fetchImpl: typeof fetch | undefined = opts.fetch
   const ready = buildFetch(baseUrl, insecureTLS, opts.fetch).then((fn) => {
     fetchImpl = fn
@@ -291,6 +294,13 @@ export function createHttpCoprocessor(opts: HttpCoprocessorOptions): HttpCoproce
     return parsed as T
   }
 
+  function stringField(value: unknown, field: string): string {
+    if (!value || typeof value !== 'object' || typeof (value as Record<string, unknown>)[field] !== 'string') {
+      throw new Error(`invalid backend response: expected string ${field}`)
+    }
+    return (value as Record<string, string>)[field]
+  }
+
   const fhe: HttpCoprocessor = {
     url: baseUrl,
     health: () => request('GET', '/health'),
@@ -300,15 +310,15 @@ export function createHttpCoprocessor(opts: HttpCoprocessorOptions): HttpCoproce
         value: String(value),
         public: pub,
       })
-      return res.ciphertext
+      return stringField(res, 'ciphertext')
     },
     decrypt: async (domain, ciphertext) => {
       const res = await request<{ plaintext: string }>('POST', `/decrypt/${domain}`, { ciphertext })
-      return res.plaintext
+      return stringField(res, 'plaintext')
     },
     call: async (fn, args) => {
       const res = await request<{ result: string }>('POST', '/call', { fn, args })
-      return res.result
+      return stringField(res, 'result')
     },
     async connect() {
       const health = await request<{ status: string }>('GET', '/health', undefined, 3_000)

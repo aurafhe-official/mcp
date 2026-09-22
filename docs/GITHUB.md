@@ -1,17 +1,7 @@
-# GitHub settings
+# Repository
 
-Canonical repo: [github.com/aurafhe-official/mcp](https://github.com/aurafhe-official/mcp). Account is a **user**, not an org. `github.com/aurafhe/mcp` does not exist.
+Canonical MCP repository: https://github.com/aurafhe-official/mcp
 
-Install today: `npx -y github:aurafhe-official/mcp`. `@aurafhe/mcp` is **not** on npm yet.
+Suggested description: “Ciphertext-only MCP diagnostic preview with separate owner tooling; native confidentiality release gate blocked.”
 
-As **aurafhe-official**, repo Settings → General:
-
-| Field | Value |
-|---|---|
-| Description | MCP server for private compute. One paste into Cursor, Claude, or any host. |
-| Website | https://afhe.io |
-| Topics | `mcp`, `mcp-server`, `ai`, `agents`, `fhe` |
-| Social preview | upload `docs/assets/social.png` |
-| Profile photo | `docs/assets/aura-512.png` |
-
-Do not list SQL, retrieval, or inference. Do not point at `/mcp` on `api.afhe.io` — that route is 404; MCP is this package.
+Preserve private vulnerability handling in SECURITY.md. Run `npm ci && npm test` before merging. Run `npm run test:native` with the supplied binary for real-engine integration; unit tests alone are insufficient evidence. Do not upload key material, native debug logs, proprietary binaries, or private disclosure reports to this repository.

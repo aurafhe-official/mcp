@@ -3,7 +3,7 @@ import * as z from 'zod/v4'
 import { FheSession, envCoprocessor, type Domain } from './fhe.js'
 
 const DomainSchema = z.enum(['int', 'float', 'string', 'binary'])
-const VERSION = '0.4.0'
+const VERSION = '0.5.0-preview.1'
 
 function json(data: unknown, isError = false) {
   return {
@@ -27,7 +27,7 @@ export function createFheServer(session: FheSession = new FheSession(envCoproces
     },
     {
       instructions:
-        'AURA is an MCP server for private compute. Use these tools like any other MCP tools. Call fhe_status first, then fhe_private_eval. Inputs are sealed before you see them. You get handles (ct_…) or only the final revealed answer. Never ask the user to paste secrets into chat. Never print raw ciphertext.',
+        'AURA is an MCP adapter to a trusted compute backend. Plaintext tool arguments are visible to the MCP host/model and are sent to the backend for encryption. The backend also decrypts. This mode does not hide data from that backend. Use synthetic data only until owner-side encryption and key separation are implemented. Results stay as handles unless reveal=true. Never ask the user to paste secrets into chat.',
     },
   )
 
@@ -134,10 +134,10 @@ export function createFheServer(session: FheSession = new FheSession(envCoproces
         'The main agent tool. Seals inputs, runs the op (add, mul, mean, concat, …) without showing intermediates, and optionally reveals only the final answer. Prefer this over encrypt/compute/decrypt.',
       inputSchema: z.object({
         domain: DomainSchema.describe('int for integers, float for real math, string for text, binary for bits'),
-        op: z.string().describe('add | sub | mul | div | mean | concat | compare | … (see fhe_ops)'),
+        op: z.string().describe('add | sub | mul | div | mean | concat | … (see fhe_ops)'),
         values: z.array(z.union([z.string(), z.number()])).min(1)
           .describe('Plaintext inputs. They are sealed before compute.'),
-        reveal: z.boolean().optional().describe('If true (typical for AI answers), return plaintext of the final result only'),
+        reveal: z.boolean().optional().describe('Explicitly opt in to returning the final plaintext result; defaults to false'),
       }),
       annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
     },
@@ -148,7 +148,7 @@ export function createFheServer(session: FheSession = new FheSession(envCoproces
             domain: domain as Domain,
             op,
             values,
-            reveal: reveal ?? true,
+            reveal: reveal ?? false,
           }),
         )
       } catch (err) {
@@ -161,7 +161,7 @@ export function createFheServer(session: FheSession = new FheSession(envCoproces
     'private-compute',
     {
       title: 'Private compute',
-      description: 'Ask the agent to compute on user data without reading the plaintext values.',
+      description: 'Compute on synthetic demo data using a trusted backend. Plaintext arguments are visible to the host and backend.',
       argsSchema: z.object({
         task: z.string().describe('What to compute privately, e.g. "mean of these salaries"'),
       }),

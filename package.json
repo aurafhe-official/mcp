@@ -1,13 +1,14 @@
 {
   "name": "@aurafhe/mcp",
-  "version": "0.4.0",
-  "description": "MCP server for private AI compute. Add it to Cursor, Claude, or any host — the model never sees the data.",
+  "version": "0.5.0-preview.1",
+  "description": "Ciphertext-only MCP server with separate owner tooling. Developer preview; native confidentiality release gate remains blocked.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "mcp": "dist/index.js",
     "aura-fhe": "dist/index.js",
-    "aura-fhe-mcp": "dist/index.js"
+    "aura-fhe-mcp": "dist/index.js",
+    "aura-owner": "dist/owner-cli.js"
   },
   "files": [
     "dist",
@@ -18,15 +19,17 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsc && chmod +x dist/index.js",
+    "build": "tsc && chmod +x dist/index.js dist/owner-cli.js",
     "prepublishOnly": "npm run build",
-    "test": "tsc && tsx --test src/*.test.ts",
+    "test": "npm run build && node --import tsx --test src/*.test.ts",
     "start": "node dist/index.js",
     "connect": "tsx examples/connect/connect.ts",
     "connect:github": "tsx examples/connect/connect.ts --github",
     "check": "bash scripts/check-network.sh",
     "launch": "bash scripts/launch.sh",
-    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "test:live": "node scripts/strict-live.mjs",
+    "test:native": "python3 native/run_integration.py"
   },
   "keywords": [
     "mcp-server",

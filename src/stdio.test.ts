@@ -12,7 +12,7 @@ function send(child: ReturnType<typeof spawn>, msg: unknown) {
   child.stdin!.write(`${JSON.stringify(msg)}\n`)
 }
 
-test('stdio handshake advertises fhe_private_eval', async (t) => {
+test('stdio handshake advertises ciphertext-only fhe_compute', async (t) => {
   if (!existsSync(bin)) {
     t.skip('dist/index.js missing — run npm run build')
     return
@@ -47,7 +47,7 @@ test('stdio handshake advertises fhe_private_eval', async (t) => {
   send(child, { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} })
   const listed = JSON.parse(await waitFor(lines, (line) => jsonId(line) === 2, 8_000))
   const names = listed.result.tools.map((tool: { name: string }) => tool.name)
-  assert.ok(names.includes('fhe_private_eval'))
+  assert.ok(names.includes('fhe_compute'))
   child.kill('SIGTERM')
 })
 

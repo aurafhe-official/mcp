@@ -1,15 +1,7 @@
-# AURA MCP
+# AI and encrypted computation
 
-An MCP server. Agents use tools. The model never sees the data.
+**Diagnostic preview — synthetic data only. The supplied native engine has not passed the confidentiality release gate. Working arithmetic is not evidence that the compute provider cannot recover inputs.**
 
-```text
-Agent  --MCP-->  npx github:aurafhe-official/mcp  --HTTPS-->  api.afhe.io:8443
-```
+The useful implemented workflow is agent orchestration over handles: an owner encrypts outside the model, an agent selects numeric arithmetic, a worker returns ciphertext, and the owner decrypts outside the model. The agent sees tool names, domains, input counts and operation structure. This does not hide metadata, prove result correctness, or certify the cryptographic engine.
 
-1. `fhe_status` — is this MCP online?
-2. `fhe_private_eval` — seal, run, reveal only the answer
-3. Keep intermediates as `ct_…` handles
-
-Live ops: arithmetic, compare, strings, scientific. Retrieval, SQL, and inference are roadmap.
-
-Story: [STORY.md](STORY.md).
+Do not claim “the compute provider cannot recover inputs” for the supplied engine. Do not claim that entering plaintext in a chat becomes private after encryption. See [the complete workflow](QUICKSTART.md).

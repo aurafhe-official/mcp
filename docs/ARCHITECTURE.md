@@ -1,25 +1,9 @@
 # Architecture
 
-```text
-MCP host (Cursor, Claude, VS Code, …)
-  ↓  MCP tools   npx -y github:aurafhe-official/mcp
-AURA MCP server
-  ↓  HTTPS + JSON
-Private-compute network
-```
+**Diagnostic preview — synthetic data only. The supplied native engine has not passed the confidentiality release gate. Working arithmetic is not evidence that the compute provider cannot recover inputs.**
 
-This repository is only the MCP server. Default network: `https://api.afhe.io:8443`. Story: [STORY.md](STORY.md).
+The owner runtime holds SKB and receives plaintext only on the owner's loopback interface. The owner CLI writes an encrypted input bundle. The MCP process receives that bundle and compute-only credentials, creates random session handles, and dispatches approved numeric operations. The compute runtime loads PKB and DictB only. Encrypted results return to an owner-selected output directory; only the separate owner application decrypts them.
 
-## What the agent sees
+The MCP cannot prevent a shell-enabled host from reading other local files. Enforce the boundary with separate machines, OS identities or restricted mounts. Never mount the owner secret or plaintext directory in the MCP or worker environment. Route and credential separation do not fix the blocked native-engine confidentiality gate.
 
-Tools, not key files:
-
-- `fhe_status` / `fhe_ops`
-- `fhe_private_eval` — one-shot private compute
-- `fhe_encrypt` / `fhe_compute` / `fhe_decrypt` — multi-step graphs with `ct_…` handles
-
-Handles live in the MCP process. Ciphertext does not have to round-trip through the prompt.
-
-## What the backend sees
-
-The HTTP contract in [PROTOCOL.md](PROTOCOL.md): health, encrypt, decrypt, generic `call`. This MCP maps agent op names (`add`, `mean`, `concat`) onto that contract.
+One process owns one key context and session. Handles expire after one hour. HTTP MCP mode is disabled until authenticated session isolation is implemented. See [setup](QUICKSTART.md) and [security policy](../SECURITY.md).

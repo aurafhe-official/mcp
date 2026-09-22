@@ -58,3 +58,10 @@ keyxx.sdk/opt-dict/
 # Logs / coverage
 coverage/
 *.log
+
+# Native crash artifacts and generated key material
+core
+core.*
+**/skb
+**/pkb
+**/dictb
