@@ -1,28 +1,23 @@
-name: Adapter CI
+name: Unpublished reference checks
 on:
   push:
-    branches: [main]
+    branches: [verified]
   pull_request:
-    branches: [main]
+    branches: [verified]
 permissions:
   contents: read
 jobs:
-  adapter:
+  reference:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node: ['20', '22', '24']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test
-      - run: npm run test:history
-      - run: git diff --exit-code -- dist
-      - run: npm run test:package
+      - run: node -e "if (!require('./package.json').private) process.exit(1)"

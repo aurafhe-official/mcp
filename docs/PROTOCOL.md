@@ -1,90 +1,36 @@
-# Public adapter interface
+# aura-coprocessor/1
 
-The adapter uses the deployed REST API: `GET /health`, `GET /functions` and
-ciphertext-only `POST /call`. Fixed demo preparation also uses
-`POST /encrypt/int` and `/encrypt/float` with five hard-coded public examples.
-No MCP tool loads keys, initializes the engine, decrypts or dispatches arbitrary
-functions. Engine implementation remains private.
+Wire contract between an owner-side client (this MCP, a CLI, or a WASM module) and a blind coprocessor. Ciphertext strings are opaque to the client; only the engine interprets them.
 
-| MCP tool | Arguments | Result |
-| --- | --- | --- |
-| `aura_start` | none | Mode, read-this-first notes, connectivity, operations and next steps |
-| `aura_roadmap` | none | Current primitives, compositions, planned work and application contact |
-| `aura_proof` | none | Evidence status; no cryptographic proof or certification |
-| `fhe_status` | none | Reachability, mode, configuration and release status |
-| `fhe_ops` | none | Supported operations intersected with service discovery |
-| `fhe_inputs` | none | Local handles, indexes, domains and expiry |
-| `fhe_compute` | `op`, `handles` | Result handle, domain and expiry |
-| `fhe_export` | `handle` | Encrypted result ID and domain |
-| `fhe_release` | `handles` | Number of forgotten handles |
+## Guarantees the server must uphold
+1. No endpoint accepts, loads or generates a secret key for user sessions.
+2. No endpoint returns plaintext derived from user ciphertext. `/encrypt` and `/decrypt` must not exist for user sessions (404).
+3. `/health` reports `secretKeyLoaded: false`, `role: "compute"` and the true op list.
+4. TLS on 443. Clients refuse `NODE_TLS_REJECT_UNAUTHORIZED=0`.
 
-Successful tool payloads and handled operation errors include `mode` as
-`fixed-synthetic-demo`, `operator-bundle` or `unconfigured`, with
-`confidentialityClaimed: false`, `confidentialityVerified: false` and
-`productionReady: false`. Framework-level schema errors can precede tool handling.
-`keyCustodyModel` is `backend-keyed` for Demo mode and `not-verified` otherwise.
-`aura_start` is a connectivity/onboarding call, not an arithmetic proof.
-`aura_proof` explicitly marks missing evidence rather than returning a pass.
-`aura_roadmap` includes Aura's confirmation that its FHE database and FHE-AI LLM
-inference applications are completed and available on request via gen@afhe.io;
-`exposedThroughDemoMcp` is false for those separate applications.
+## Endpoints
 
-`fhe_compute` also returns `metrics`: client elapsed milliseconds (worker checks,
-network and evaluation combined), output ciphertext bytes, number of remote
-binary calls, and an integer/approximate precision class. It does not measure
-engine-only time or decrypt to check error; `accuracyVerified` is false.
-The separate live verifier reports actual numerical error for synthetic cases.
+`GET /health` -> `{ status:"ok", protocol:"aura-coprocessor/1", role:"compute", secretKeyLoaded:false, engine, scheme, ops:[...] }`
 
-Domains: `int`, `float`. Operations: `add`, `sub`, `mul`, `div`.
-Addition/multiplication accept 2–128 handles; subtraction/division require two.
-Operands must share a domain. Integer division follows backend semantics; floats
-are approximate. The adapter cannot inspect encrypted divisors or prove ranges
-and computation depth are safe. No comparison, scientific, string, binary, SQL,
-retrieval or model-inference capability is claimed by this preview.
+`GET /params` -> public encryption parameters. Clients pin them and refuse anything below 128-bit.
+Reference: `{ scheme:"ckks", polyModulusDegree:8192, coeffModulusBits:[60,40,40,60], scaleBits:40, securityLevel:128 }`
+Aura engine: publish its own parameter object; the client's `ClientCrypto` implementation consumes it.
 
-Handles expire after 30 minutes and belong to one process. Derived results inherit
-the earliest input expiry. Bounds: one active operation, 120 tool calls/minute,
-512 handles, 32 MiB stored ciphertext, 4 MiB network responses and 30-second
-request timeout. Cancellation reaches pending network calls. Redirects and TLS
-bypass are rejected; backend diagnostics do not appear in tool errors.
+`POST /session` `{ fingerprint, evaluationKeys:{ relin, ... } }` -> `{ sessionId }`
+Registers PUBLIC evaluation material only. One session per key fingerprint per process.
 
-## Encrypted files
+`POST /eval` `{ sessionId, op, args:[ciphertext...], plain?:[number...] }` -> `{ result: ciphertext, engineMs, level? }`
+- `add | sum`: n >= 2 ciphertexts
+- `sub`: exactly 2
+- `mul`: n >= 2
+- `scale`: 1 ciphertext, `plain:[k]`
+- `weighted_sum`: n ciphertexts, `plain` of length n
+- `div`, `compare`, `max`: Aura engine only; `compare` returns an encrypted -1/0/1, `max` an encrypted value
+Errors: 400 bad request, 401 unknown session, 422 operation unavailable, 429 rate limited.
 
-An external owner integration supplies the operator-configured JSON bundle:
+## Target client obligations (not all satisfied by this reference)
+- Generate and store the secret key locally (mode 600); never serialize it into a request.
+- Journal every request before sending; expose the journal to the user.
+- Refuse to reveal raw sealed inputs to the agent; reveal computed results only, with a local plaintext cross-check.
 
-```json
-{"version":1,"keyId":"owner-key-reference","inputs":[{"domain":"int","ciphertext":"OPAQUE_CIPHERTEXT"},{"domain":"int","ciphertext":"OPAQUE_CIPHERTEXT"}]}
-```
-
-Placeholders are not working ciphertexts. Maximum bundle: 16 MiB, 1–128 inputs,
-2 MiB per ciphertext. Extra fields are rejected. Ciphertext is opaque to the
-adapter; it cannot verify correct encryption. The key ID is a routing tag, not
-authentication. Private backend policies must enforce credential/key/operation
-ownership and isolation.
-
-Exports retain the version 1 recipient envelope:
-
-```json
-{"version":1,"keyId":"owner-key-reference","resultId":"ct_00000000000000000000000000000000","domain":"int","ciphertext":"OPAQUE_CIPHERTEXT","operation":"add"}
-```
-
-Only computed handles can be exported. Files are created under the operator's
-configured directory and never overwritten. Tools return IDs, not contents or
-directory paths. Expiry and release do not delete exported files; the recipient
-controls retention and decryption separately.
-
-## Modes
-
-The default connection checks service status and operations without configuration.
-Computing an operator bundle requires a credential and the matching compute-only
-worker declaration. Metadata does not establish cryptographic confidentiality.
-
-`--demo` uses fixed public examples and the hosted API's existing key setup.
-It cannot load an owner bundle. The standalone synthetic verifier decrypts only
-its own demo artifacts outside MCP. The confidentiality release gate remains
-blocked in both modes.
-
-The previous draft-only `aura-coprocessor/1` session gateway is not required or
-asserted to be deployed. This version uses the existing REST API. A Verified-mode
-client, public-key session provisioning, WASM client and traffic journal are not
-shipped. `/health` metadata cannot establish their existence or security.
+Current implementation gaps and platform limitations are documented in [REVIEW.md](REVIEW.md). In particular, the current journal records after responses, not before transmission.

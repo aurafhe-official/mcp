@@ -1,35 +1,32 @@
 {
   "name": "@aurafhe/mcp",
-  "version": "0.5.0-rc.5",
-  "description": "MCP adapter for ciphertext arithmetic through Aura\u2019s coprocessor. Diagnostic preview.",
+  "version": "0.6.0-reference.0",
+  "description": "Unpublished engineering reference using Microsoft SEAL; not the Aura engine or a production release.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "mcp": "dist/index.js",
     "aura-fhe": "dist/index.js",
-    "aura-fhe-mcp": "dist/index.js"
+    "aura-fhe-mcp": "dist/index.js",
+    "aura-reference-coprocessor": "dist/reference/server.js"
   },
   "files": [
     "dist",
     "docs/*.md",
+    "examples",
     "README.md",
-    "README.zh-CN.md",
     "SECURITY.md",
-    "LICENSE",
-    "release-status.json"
+    "LICENSE"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm test && npm run test:package",
-    "test": "npm run build && node scripts/test.mjs",
-    "test:package": "node scripts/verify-package.mjs",
+    "test": "npm run build && node scripts/security-regression.mjs && node scripts/e2e.mjs",
     "start": "node dist/index.js",
-    "check": "node dist/index.js --check",
-    "test:live": "npm run build && node scripts/verify-live.mjs",
-    "test:history": "node scripts/check-history.mjs"
+    "reference": "node dist/reference/server.js",
+    "proof": "node dist/index.js proof"
   },
   "keywords": [
     "mcp-server",
@@ -58,6 +55,7 @@
   "homepage": "https://afhe.io",
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",
+    "node-seal": "^7.0.0",
     "zod": "4.5.4"
   },
   "devDependencies": {
@@ -66,9 +64,5 @@
     "tsx": "4.23.13",
     "typescript": "5.9.3"
   },
-  "publishConfig": {
-    "access": "public",
-    "tag": "preview",
-    "registry": "https://registry.npmjs.org/"
-  }
+  "private": true
 }

@@ -1,57 +1,85 @@
 #!/usr/bin/env node
 import { serveStdio, StdioServerTransport } from '@modelcontextprotocol/server/stdio'
-import { homedir } from 'node:os'
+import { createInterface } from 'node:readline'
 import path from 'node:path'
 import { AuraError, VERSION } from './contracts.js'
-import { configuredCoprocessor } from './coprocessor.js'
-import { readBundle, resultWriter } from './artifacts.js'
-import { FheSession } from './fhe.js'
-import { createFheServer } from './server.js'
+import { buildContext } from './context.js'
+import { createServer } from './server.js'
+import { sealCsv, sealValues } from './session.js'
+import { runProof } from './proof.js'
 
-const help = `AURA MCP ${VERSION} â€” diagnostic preview (synthetic data only)
-  aura-fhe-mcp                    Start the MCP tool connection
-  aura-fhe-mcp --demo             Enable fixed public example inputs
-  aura-fhe-mcp --check            Check HTTPS and available operations
-  aura-fhe-mcp --config cursor    Print host settings (also: claude, vscode)
-  aura-fhe-mcp --config cursor --demo
-  aura-fhe-mcp --version
+const HELP = `AURA MCP ${VERSION} - encrypted compute for AI agents
 
-Node.js 20+ is required. Generated settings use this installed MCP directly.
-The demo uses 25, 17, 7.5, 2.5 and 2. No keys or engine installation needed.
-Optional AURA_COPROCESSOR_URL and AURA_ACCESS_TOKEN configure the remote service.
-AURA_INPUT_BUNDLE selects an encrypted input file, outside model context.
-Bundle mode requires AURA_ACCESS_TOKEN and a compute-only worker with matching key ID.
-AURA_RESULT_DIR selects an absolute output directory (default: ~/.aura-mcp/results).
-Confidentiality and production release remain blocked; see SECURITY.md.
-`
-async function main() {
-  const args = process.argv.slice(2)
-  if (args.length === 1 && args[0] === '--version') { console.log(VERSION); return }
-  if (args.length === 1 && args[0] === '--help') { console.log(help); return }
-  const demo = args.includes('--demo')
-  if (args[0] === '--config' && ['cursor','claude','vscode'].includes(args[1]) && (args.length === 2 || (args.length === 3 && args[2] === '--demo'))) {
-    const config = { command: process.execPath, args: [path.resolve(process.argv[1]), ...(demo ? ['--demo'] : [])] }
-    console.log(JSON.stringify(args[1] === 'vscode' ? { servers: { aura: { type: 'stdio', ...config } } } : { mcpServers: { aura: config } }, null, 2))
-    return
-  }
-  if (args.length && !(args.length === 1 && ['--demo','--check'].includes(args[0]))) throw new AuraError('USE_HELP_FOR_SUPPORTED_OPTIONS')
-  const coprocessor = configuredCoprocessor()
-  const writeResult = resultWriter(process.env.AURA_RESULT_DIR ?? path.join(homedir(), '.aura-mcp', 'results'))
-  if (args[0] === '--check') {
-    const session = new FheSession(coprocessor, { writeResult })
-    console.log(JSON.stringify({ ...await session.status(), ...await session.ops() }, null, 2)); return
-  }
-  if (demo && process.env.AURA_INPUT_BUNDLE) throw new AuraError('DEMO_AND_BUNDLE_CONFLICT')
-  if (process.env.AURA_INPUT_BUNDLE && !process.env.AURA_ACCESS_TOKEN) throw new AuraError('BUNDLE_CREDENTIAL_REQUIRED')
-  const bundle = process.env.AURA_INPUT_BUNDLE ? await readBundle(process.env.AURA_INPUT_BUNDLE) : undefined
-  if (demo) console.error('AURA MCP: fixed synthetic demo; no confidential data. Results remain encrypted.')
-  serveStdio(() => createFheServer(new FheSession(coprocessor, { bundle, writeResult,
-    ...(demo ? { demo: (signal?: AbortSignal) => coprocessor.demoBundle(signal) } : {}) })), {
-    transport: new StdioServerTransport(process.stdin, process.stdout, { maxBufferSize: 64 * 1024 }),
-    onerror: () => console.error('AURA MCP: transport error.'),
+  aura-fhe                                  start the MCP server (stdio)
+  aura-fhe status                           coprocessor health + local key fingerprint
+  aura-fhe seal --label NAME                type private numbers (hidden), encrypt locally
+  aura-fhe seal --file F.csv --column C     encrypt one CSV column locally
+  aura-fhe proof [--secret]                 run the live FHE proof suite (optionally on a hidden number you choose)
+  aura-fhe journal                          everything this machine ever sent to the coprocessor
+  aura-fhe config cursor|claude|codex|vscode
+
+Env: AURA_COPROCESSOR_URL (default http://127.0.0.1:8787), AURA_ACCESS_TOKEN, AURA_HOME (default ~/.aura)
+Local reference coprocessor for development: aura-reference-coprocessor (http://127.0.0.1:8787)`
+
+const flag = (args: string[], name: string) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined }
+
+function hidden(prompt: string) {
+  return new Promise<string>(resolve => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true })
+    const out = rl as unknown as { _writeToOutput: (s: string) => void; output: NodeJS.WriteStream }
+    out._writeToOutput = (s: string) => { if (s.includes(prompt)) out.output.write(s) }
+    rl.question(prompt, a => { rl.close(); process.stdout.write('\n'); resolve(a) })
   })
 }
+
+function config(host: string) {
+  const cmd = { command: process.execPath, args: [path.resolve(process.argv[1])],
+    env: { AURA_COPROCESSOR_URL: process.env.AURA_COPROCESSOR_URL ?? 'http://127.0.0.1:8787' } }
+  if (host === 'codex') return `[mcp_servers.aura_reference]\ncommand = ${JSON.stringify(cmd.command)}\nargs = ${JSON.stringify(cmd.args)}\n[mcp_servers.aura_reference.env]\nAURA_COPROCESSOR_URL = ${JSON.stringify(cmd.env.AURA_COPROCESSOR_URL)}`
+  if (host === 'vscode') return JSON.stringify({ servers: { aura_reference: { type: 'stdio', ...cmd } } }, null, 2)
+  return JSON.stringify({ mcpServers: { aura_reference: cmd } }, null, 2)
+}
+
+async function main() {
+  const [cmd, ...args] = process.argv.slice(2)
+  if (cmd === '--help' || cmd === 'help') return console.log(HELP)
+  if (cmd === '--version') return console.log(VERSION)
+  if (cmd === 'config') return console.log(config(args[0] ?? 'cursor'))
+  const c = await buildContext()
+  if (!cmd) {
+    return serveStdio(() => createServer(c), { transport: new StdioServerTransport(process.stdin, process.stdout),
+      onerror: () => console.error('AURA MCP: transport error') })
+  }
+  if (cmd === 'status') {
+    const h = await c.remote.health()
+    return console.log(JSON.stringify({ endpoint: c.remote.endpoint, ...h, localKeyFingerprint: c.crypto.fingerprint().slice(0, 16) }, null, 2))
+  }
+  if (cmd === 'seal') {
+    const file = flag(args, '--file'), label = flag(args, '--label')
+    if (file) return console.log(JSON.stringify(await sealCsv(c, path.resolve(file), flag(args, '--column') ?? '', label), null, 2))
+    if (!label) throw new AuraError('LABEL_REQUIRED', 'aura-fhe seal --label NAME')
+    const raw = await hidden(`Numbers for "${label}" (comma-separated, hidden): `)
+    const values = raw.split(',').map(v => Number(v.trim()))
+    if (!values.length || values.some(v => !Number.isFinite(v))) throw new AuraError('NUMBERS_ONLY')
+    const items = await sealValues(c, label, values)
+    return console.log(`Sealed ${items.length} value(s) as "${label}". Only ciphertext is stored; the agent will see handles, never values.`)
+  }
+  if (cmd === 'proof') {
+    const secret = args.includes('--secret') ? Number(await hidden('Pick a public synthetic test number (its derived results are shown): ')) : undefined
+    const r = await runProof(c, { secret })
+    console.log(`\nReference functional checks  ${r.passed}/${r.total} passed   engine: ${r.engine}   endpoint: ${r.endpoint}\n`)
+    for (const k of r.checks) console.log(`${k.pass ? 'PASS' : 'FAIL'}  ${k.claim}\n      ${JSON.stringify(k.evidence)}\n`)
+    process.exitCode = r.passed === r.total ? 0 : 1; return
+  }
+  if (cmd === 'journal') {
+    const all = await c.journal.all()
+    for (const e of all) console.log(`${e.at}  ${e.method} ${e.path}  out ${e.bytesOut}B  [${e.kinds.join(', ')}]  sha256 ${e.sha256.slice(0, 16)}`)
+    return console.log(`\n${all.length} requests, ${all.reduce((n, e) => n + e.bytesOut, 0)} bytes sent. This metadata journal is not a complete key-egress audit.`)
+  }
+  console.log(HELP); process.exitCode = 1
+}
+
 main().catch(e => {
-  console.error(`AURA MCP: ${e instanceof AuraError ? e.code : 'CONFIGURATION_OR_CONNECTION_FAILED'}. See --help or docs/QUICKSTART.md.`)
+  console.error(e instanceof AuraError ? `AURA: ${e.code}${e.hint ? ` - ${e.hint}` : ''}` : `AURA: ${(e as Error).message}`)
   process.exitCode = 1
 })

@@ -1,21 +1,14 @@
-# Security policy
+# Security — unpublished engineering reference
 
-Report privately to security@afhe.io; do not publish sensitive details in issues.
+Use synthetic data only. This branch is not approved for confidential production
+data and is not part of the public npm release. The server is a localhost
+Microsoft SEAL evaluator; it is not Aura's proprietary engine.
 
-**Diagnostic preview — synthetic data only. The existing confidentiality release
-gate remains blocked. Working arithmetic is not evidence that the processing
-provider cannot recover inputs.**
+Local encryption and functional tests do not establish deployment confidentiality.
+Computed results can be revealed into the agent conversation. The journal and
+seven checks have the limitations documented in [REVIEW.md](docs/REVIEW.md).
+Key isolation, Windows ACLs, authorization, transport bounds, persistence and
+independent security review remain open. Do not treat a passing test as sign-off.
 
-The public package contains the connection adapter, not proprietary engine code,
-native bindings, private parameters or key material. Engine remediation and
-independent review remain prerequisites for real-data deployment. Removing
-implementation details from GitHub does not clear that release gate.
-
-MCP has no custom plaintext-input, decryption, secret-key or arbitrary-path tools.
-The optional demo encrypts fixed public examples at the service. That service can
-decrypt demonstration data and must not be presented as an owner-key-isolated
-production deployment.
-
-See [the privacy boundary](docs/SECURITY-MODEL.md). Tests do not confer production
-sign-off. Earlier published revisions may remain in GitHub history and existing
-copies after removal from the current tree.
+Report issues privately to security@afhe.io. Do not include keys or confidential
+inputs in public reports. Never publish this branch as the main npm package.

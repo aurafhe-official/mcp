@@ -1,6 +1,0 @@
-{
-  "status": "diagnostic-preview",
-  "productionReady": false,
-  "confidentialityGate": "blocked",
-  "scope": "synthetic data; remote coprocessor integration only"
-}

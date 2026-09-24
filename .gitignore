@@ -17,3 +17,6 @@ keys/
 *.tsbuildinfo
 coverage/
 .DS_Store
+
+dist/
+.aura/
