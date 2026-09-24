@@ -18,7 +18,7 @@ const packed=JSON.parse(npm(['pack','--json','--pack-destination',dir]))[0]
 const files=packed.files.map(f=>f.path)
 for(const required of ['dist/index.js','dist/coprocessor.js','docs/QUICKSTART.md']) assert.ok(files.includes(required),required)
 // Explicit inventory: adding a directory to package.json is not enough to ship it.
-const allowed = /^(?:package\.json|release-status\.json|README\.md|README\.zh-CN\.md|SECURITY\.md|LICENSE|dist\/(?:index|server|contracts|fhe|coprocessor|artifacts)\.(?:js|d\.ts)|docs\/(?:ARCHITECTURE|PROTOCOL|QUICKSTART|SECURITY-MODEL|VERIFICATION|INVESTOR-DEMO)\.md)$/
+const allowed = /^(?:package\.json|release-status\.json|README\.md|README\.zh-CN\.md|SECURITY\.md|LICENSE|dist\/(?:index|server|contracts|fhe|guide|coprocessor|artifacts)\.(?:js|d\.ts)|docs\/(?:ARCHITECTURE|PROTOCOL|QUICKSTART|SECURITY-MODEL|VERIFICATION|INVESTOR-DEMO)\.md)$/
 assert.deepEqual(files.filter(f=>!allowed.test(f)),[], 'Unexpected file in public package')
 const consumer=path.join(dir,'consumer');await mkdir(consumer)
 await writeFile(path.join(consumer,'package.json'), JSON.stringify({ name: 'aura-package-verification', version: '1.0.0', private: true }))
@@ -36,5 +36,7 @@ try {
   await client.connect(new StdioClientTransport({...settings.mcpServers.aura,stderr:'pipe'}))
   assert.equal(client.getServerVersion().version,version)
   assert.equal((await client.listTools()).tools.length,9)
+  assert.ok((await client.listPrompts()).prompts.some(p=>p.name==='aura_demo'))
+  assert.ok(client.getInstructions().includes('never heard of FHE'))
 } finally { await client.close() }
 console.log(`PASS public client installation ${version}: ${files.length} approved files`)

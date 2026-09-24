@@ -4,10 +4,18 @@
 
 [中文说明](README.zh-CN.md) · [Investor walkthrough](docs/INVESTOR-DEMO.md)
 
-Connect Cursor, Claude Desktop, VS Code and other compatible MCP clients to
-Aura's coprocessor. Build numeric workflows with encrypted inputs, compose
-calculations and export encrypted results. Computation runs on Aura's service;
-the MCP tools work with handles instead of exposing raw values to the agent.
+**New to FHE? Start here.** Fully homomorphic encryption (FHE) lets us calculate
+with data in its encrypted form. Connect your assistant, then say:
+
+> Show me the Aura demo. I am new to FHE; explain each step as we go.
+
+Your assistant introduces a simple example, prepares encrypted samples, requests
+the calculation from Aura and saves the encrypted result. It explains what each
+step means. No key setup, private data or knowledge of tool names is needed.
+
+The first example combines two public shop totals, 25 and 17. Their expected sum
+is 42. The tour returns an **encrypted result**, not a decrypted or verified 42.
+Connect Cursor, Claude Desktop, VS Code or another compatible MCP client below.
 
 ## Read this first
 
@@ -53,11 +61,20 @@ The app starts the installed MCP automatically. No npm account is required.
 
 Then ask your agent:
 
-> Run aura_start. Show the mode and available operations, get the fixed demo
-> inputs, add integer inputs 0 and 1, and export the encrypted result.
+> Show me the Aura demo. I am new to FHE; explain each step as we go.
 
-`aura_start` explains the workflow and checks the service. It does not silently
-claim that a decrypted answer or key custody was verified.
+The assistant guides you through four steps:
+
+1. **Understand:** what encrypted computing means and which public examples we use.
+2. **Prepare:** obtain encrypted versions of the example numbers.
+3. **Calculate:** ask Aura to combine them and receive an encrypted result.
+4. **Save and explain:** save the result, recap what happened, and choose what to try next.
+
+In apps that show MCP prompts, you can also select **Show me encrypted computing**
+(`aura_demo`). Connecting makes the tools available; your message starts the tour.
+The host controls tool approvals and how the guidance is displayed.
+Ask questions at any point, or say “one step at a time.” No copying long identifiers
+or loading keys is needed. The assistant uses the tools for you.
 
 For a quick terminal connection check:
 
@@ -66,7 +83,7 @@ aura-fhe-mcp --check
 ```
 
 The `preview` tag installs the current synthetic-data preview. To install this
-exact release, use `@aurafhe/mcp@0.5.0-rc.5` instead.
+exact release, use `@aurafhe/mcp@0.5.0-rc.6` instead.
 
 ## Available today: encrypted numeric computation
 

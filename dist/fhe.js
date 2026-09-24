@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { AuraError, Ciphertext, FUNCTIONS, InputBundle, MAX_BUNDLE, MAX_INPUTS, Operation } from './contracts.js';
+import { welcomeGuide, preparedGuide, computedGuide, savedGuide } from './guide.js';
 /** Session-local handles; ciphertext arithmetic always runs at the coprocessor. */
 export class FheSession {
     remote;
@@ -52,6 +53,7 @@ export class FheSession {
         const status = await this.status(signal);
         const operations = await this.ops(signal);
         return { ...status, ...operations,
+            guide: welcomeGuide(Boolean(this.options.demo), Boolean(this.options.bundle), operations.ops.some(o => o.op === 'add' && o.domain === 'int')),
             readThisFirst: { purpose: 'Demonstrate ciphertext computation through Aura MCP. FHE is the base layer; applications are built from its operations.',
                 demo: 'Backend-keyed Demo mode with fixed public examples; backend encryption/decryption. Demonstrates functionality, not confidentiality against Aura.',
                 production: 'Owner-side encryption and recipient-side decryption with an authenticated compute-only service. Verified mode is not shipped here.',
@@ -122,10 +124,11 @@ export class FheSession {
                 this.inputHandles = bundle.inputs.map(ref => this.remember({ ...ref, expiresAt: this.now() + 30 * 60_000 }).handle);
                 this.loaded = true;
             }
-            return { inputs: this.inputHandles.flatMap((handle, index) => {
-                    const ref = this.handles.get(handle);
-                    return ref ? [{ handle, index, domain: ref.domain, expiresAt: ref.expiresAt }] : [];
-                }) };
+            const inputs = this.inputHandles.flatMap((handle, index) => {
+                const ref = this.handles.get(handle);
+                return ref ? [{ handle, index, domain: ref.domain, expiresAt: ref.expiresAt }] : [];
+            });
+            return { inputs, ...(this.options.demo ? { guide: preparedGuide(inputs) } : {}) };
         });
     }
     async compute(op, handles, signal) {
@@ -155,7 +158,8 @@ export class FheSession {
             const expiresAt = Math.min(...refs.map(ref => ref.expiresAt));
             if (expiresAt <= this.now())
                 throw new AuraError('UNKNOWN_OR_EXPIRED_HANDLE');
-            return { ...this.remember({ domain, ciphertext, operation: op, expiresAt }),
+            const result = this.remember({ domain, ciphertext, operation: op, expiresAt });
+            return { ...result, ...(this.options.demo ? { guide: computedGuide(result.handle) } : {}),
                 metrics: { clientElapsedMs: Math.round((performance.now() - started) * 100) / 100,
                     ciphertextBytes: Buffer.byteLength(ciphertext), remoteComputeCalls: refs.length - 1,
                     timingScope: 'Includes worker checks, network and remote evaluation; not engine-only time.',
@@ -169,7 +173,7 @@ export class FheSession {
                 throw new AuraError('COMPUTED_RESULT_REQUIRED');
             const resultId = `ct_${randomBytes(16).toString('hex')}`;
             await this.options.writeResult({ version: 1, keyId: this.keyId, resultId, domain: ref.domain, ciphertext: ref.ciphertext, operation: ref.operation });
-            return { resultId, domain: ref.domain, encrypted: true };
+            return { resultId, domain: ref.domain, encrypted: true, ...(this.options.demo ? { guide: savedGuide() } : {}) };
         });
     }
     async release(handles) {

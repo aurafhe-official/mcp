@@ -75,6 +75,48 @@ export declare class FheSession {
         };
     };
     start(signal?: AbortSignal): Promise<{
+        guide: {
+            title: string;
+            message: string;
+            nextStep: string;
+            needsPrivateData: boolean;
+        } | {
+            nextAction: {
+                tool: string;
+                arguments: {};
+            };
+            step: number;
+            totalSteps: number;
+            title: string;
+            message: string;
+            whyItMatters: string;
+            sample: {
+                story: string;
+                values: number[];
+                expectedSum: number;
+                expectedSumIsNotAnObservedResult: boolean;
+            };
+            modeNote: string;
+            steps: string[];
+            nextStep?: undefined;
+            needsPrivateData?: undefined;
+        } | {
+            nextStep: string;
+            step: number;
+            totalSteps: number;
+            title: string;
+            message: string;
+            whyItMatters: string;
+            sample: {
+                story: string;
+                values: number[];
+                expectedSum: number;
+                expectedSumIsNotAnObservedResult: boolean;
+            };
+            modeNote: string;
+            steps: string[];
+            needsPrivateData?: undefined;
+        };
         readThisFirst: {
             purpose: string;
             demo: string;
@@ -125,6 +167,27 @@ export declare class FheSession {
         }[];
     }>;
     inputs(signal?: AbortSignal): Promise<{
+        guide?: {
+            title: string;
+            message: string;
+            step?: undefined;
+            totalSteps?: undefined;
+            whyItMatters?: undefined;
+            nextAction?: undefined;
+        } | {
+            step: number;
+            totalSteps: number;
+            title: string;
+            message: string;
+            whyItMatters: string;
+            nextAction: {
+                tool: string;
+                arguments: {
+                    op: string;
+                    handles: string[];
+                };
+            };
+        } | undefined;
         inputs: {
             handle: string;
             index: number;
@@ -141,11 +204,34 @@ export declare class FheSession {
             precisionClass: string;
             accuracyVerified: boolean;
         };
+        guide?: {
+            step: number;
+            totalSteps: number;
+            title: string;
+            message: string;
+            whyItMatters: string;
+            nextAction: {
+                tool: string;
+                arguments: {
+                    handle: string;
+                };
+            };
+        } | undefined;
         handle: string;
         domain: "int" | "float";
         expiresAt: number;
     }>;
     exportResult(handle: string): Promise<{
+        guide?: {
+            step: number;
+            totalSteps: number;
+            title: string;
+            message: string;
+            whyItMatters: string;
+            observed: string[];
+            nextChoices: string[];
+            resultReading: string;
+        } | undefined;
         resultId: string;
         domain: "int" | "float";
         encrypted: boolean;
