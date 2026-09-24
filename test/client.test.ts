@@ -149,7 +149,7 @@ test('actual MCP validation rejects plaintext, reveal flags and path arguments',
   const f=fixture(),server=createFheServer(f.session),client=new Client({name:'test',version:'1'})
   const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
   try{
-    assert.deepEqual((await client.listTools()).tools.map(x=>x.name).sort(),['fhe_compute','fhe_export','fhe_inputs','fhe_ops','fhe_release','fhe_status'])
+    assert.deepEqual((await client.listTools()).tools.map(x=>x.name).sort(),['aura_proof','aura_roadmap','aura_start','fhe_compute','fhe_export','fhe_inputs','fhe_ops','fhe_release','fhe_status'])
     for(const args of [{value:25},{path:'/secret'},{reveal:true}])assert.equal((await client.callTool({name:'fhe_inputs',arguments:args})).isError,true)
     const result=await client.callTool({name:'fhe_inputs',arguments:{}})
     assert.ok(!JSON.stringify(result).includes('cipher-a'))
@@ -158,7 +158,7 @@ test('actual MCP validation rejects plaintext, reveal flags and path arguments',
 test('zero-configuration installed entry performs an actual stdio handshake without backend calls',async()=>{
   const client=new Client({name:'stdio-test',version:'1'})
   const transport=new StdioClientTransport({command:process.execPath,args:['dist/index.js'],env:{...process.env,AURA_COPROCESSOR_URL:'https://127.0.0.1:1'} as Record<string,string>,stderr:'pipe'})
-  try{await client.connect(transport);assert.equal((await client.listTools()).tools.length,6)}finally{await client.close()}
+  try{await client.connect(transport);assert.equal((await client.listTools()).tools.length,9)}finally{await client.close()}
 })
 test('config generator and help need no credentials, and never echo environment secrets',async()=>{
   const run=promisify(execFile)
@@ -169,4 +169,52 @@ test('config generator and help need no credentials, and never echo environment 
   }
   assert.match((await run(process.execPath,['dist/index.js','--help'])).stdout,/synthetic data only/)
   await assert.rejects(run(process.execPath,['dist/index.js','--http']))
+})
+
+test('onboarding and evidence never promote worker declarations into Verified mode',async()=>{
+  const f=fixture()
+  const start=await f.session.start()
+  assert.equal(start.mode,'operator-bundle')
+  assert.equal(start.confidentialityClaimed,false)
+  assert.equal(start.confidentialityVerified,false)
+  assert.equal(start.smokeTest.status,'not-run')
+  assert.equal(f.calls.length,0)
+  assert.equal(f.session.proof().keyCustody.status,'not-verified')
+  assert.equal(f.session.proof().networkJournal.status,'not-implemented')
+  assert.equal(f.session.roadmap().verifiedMode.status,'not available in this release')
+  assert.equal(f.session.roadmap().nextRelease.status,'planned')
+  const demo=new FheSession(f.remote,{demo:async()=>bundle,writeResult:async()=>{}})
+  assert.equal(demo.context().mode,'fixed-synthetic-demo')
+  assert.equal(demo.proof().keyCustody.status,'not-applicable-to-demo')
+  const empty=new FheSession(f.remote,{writeResult:async()=>{}})
+  assert.equal(empty.context().mode,'unconfigured')
+})
+
+test('tool payloads retain mode and no confidentiality claim on success and operation errors',async()=>{
+  const f=fixture(),server=createFheServer(f.session),client=new Client({name:'mode-test',version:'1'})
+  const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
+  try {
+    for(const name of ['aura_start','aura_roadmap','aura_proof','fhe_status','fhe_ops','fhe_inputs']) {
+      const r=await client.callTool({name,arguments:{}})
+      const body=JSON.parse((r.content as any)[0].text)
+      assert.equal(body.mode,'operator-bundle');assert.equal(body.confidentialityClaimed,false)
+      assert.ok(!JSON.stringify(body).includes('cipher-a'))
+    }
+    const r=await client.callTool({name:'fhe_compute',arguments:{op:'add',handles:['ct_'+'0'.repeat(32),'ct_'+'1'.repeat(32)]}})
+    assert.equal(r.isError,true)
+    const body=JSON.parse((r.content as any)[0].text)
+    assert.equal(body.mode,'operator-bundle');assert.equal(body.confidentialityClaimed,false)
+    assert.equal(body.error,'UNKNOWN_OR_EXPIRED_HANDLE')
+  } finally { await client.close();await server.close() }
+})
+
+test('computation metrics describe client elapsed time and size without claiming accuracy',async()=>{
+  const f=fixture(),handles=(await f.session.inputs()).inputs.slice(0,2).map(x=>x.handle)
+  const result=await f.session.compute('add',handles)
+  assert.ok(Number.isFinite(result.metrics.clientElapsedMs)&&result.metrics.clientElapsedMs>=0)
+  assert.equal(result.metrics.ciphertextBytes,Buffer.byteLength('cipher-result'))
+  assert.equal(result.metrics.remoteComputeCalls,1)
+  assert.equal(result.metrics.accuracyVerified,false)
+  assert.match(result.metrics.timingScope,/not engine-only/)
+  assert.ok(!('engineMs' in result.metrics))
 })

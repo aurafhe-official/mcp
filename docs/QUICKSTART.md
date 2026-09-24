@@ -9,7 +9,7 @@ npm install -g @aurafhe/mcp@preview
 ```
 
 This installs the current MCP preview. No Git, npm account or local computation
-engine is needed. Use `@aurafhe/mcp@0.5.0-rc.4` to pin this exact release.
+engine is needed. Use `@aurafhe/mcp@0.5.0-rc.5` to pin this exact release.
 
 ## 2. Connect your app
 
@@ -26,7 +26,7 @@ aura-fhe-mcp --config cursor --demo
 
 Add the generated `aura` entry under `mcpServers` in your project's
 `.cursor/mcp.json` or your user `~/.cursor/mcp.json`. Preserve existing entries,
-then reconnect or restart Cursor. Confirm that Aura's six tools appear.
+then reconnect or restart Cursor. Confirm that Aura's nine tools appear.
 
 ### Claude Desktop
 
@@ -36,7 +36,7 @@ aura-fhe-mcp --config claude --demo
 
 Open Claude Desktop's **Settings → Developer → Edit Config**. Add the generated
 `aura` entry under `mcpServers`, preserving existing entries. Save and fully
-restart Claude Desktop. Confirm that Aura's six tools appear.
+restart Claude Desktop. Confirm that Aura's nine tools appear.
 
 This is for the desktop app's local MCP connection, not a web connector URL.
 
@@ -78,7 +78,7 @@ Official references: [Cursor](https://prod.cursor.com/help/customization/mcp),
 
 ## 3. Try it
 
-Ask the agent to check Aura, list its demo inputs, add integer inputs 0 and 1,
+Ask the agent to run `aura_start`, list its demo inputs, add integer inputs 0 and 1,
 then export the encrypted result. The fixed public inputs are `25`, `17`, `7.5`,
 `2.5` and `2`; the last three are floats.
 

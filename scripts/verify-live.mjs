@@ -23,14 +23,20 @@ const transport = new StdioClientTransport({ command, args, env, stderr: 'pipe' 
 async function tool(name, args = {}) {
   const result = await client.callTool({ name, arguments: args })
   assert.ok(!result.isError, `${name} failed`)
-  return JSON.parse(result.content[0].text)
+  const payload = JSON.parse(result.content[0].text)
+  assert.equal(payload.mode, 'fixed-synthetic-demo')
+  assert.equal(payload.confidentialityClaimed, false)
+  return payload
 }
 const checks = []
 try {
   await client.connect(transport)
-  assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['fhe_compute','fhe_export','fhe_inputs','fhe_ops','fhe_release','fhe_status'])
+  assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['aura_proof','aura_roadmap','aura_start','fhe_compute','fhe_export','fhe_inputs','fhe_ops','fhe_release','fhe_status'])
   assert.equal((await tool('fhe_status')).backendReachable, true)
   assert.equal((await tool('fhe_ops')).ops.length, 8)
+  assert.equal((await tool('aura_start')).smokeTest.status, 'not-run')
+  assert.equal((await tool('aura_proof')).keyCustody.status, 'not-applicable-to-demo')
+  assert.equal((await tool('aura_roadmap')).nextRelease.status, 'planned')
   const { inputs } = await tool('fhe_inputs')
   assert.equal(inputs.length, 5)
   async function verify(op, indexes, domain, expected, supplied) {
@@ -51,7 +57,10 @@ try {
     assert.ok(typeof plaintext === 'string' || typeof plaintext === 'number')
     const actual = Number(plaintext)
     assert.ok(Number.isFinite(actual) && Math.abs(actual - expected) <= (domain === 'int' ? 0 : 0.01), `Incorrect ${domain} ${op}`)
-    checks.push({ domain, operation: op, expected, passed: true })
+    assert.ok(Number.isFinite(computed.metrics.clientElapsedMs))
+    assert.ok(computed.metrics.ciphertextBytes > 0)
+    checks.push({ domain, operation: op, expected, actual, absoluteError: Math.abs(actual - expected),
+      tolerance: domain === 'int' ? 0 : 0.01, metrics: computed.metrics, passed: true })
     return computed.handle
   }
   const sum = await verify('add', [0,1], 'int', 42)
@@ -64,6 +73,9 @@ try {
   await verify('div', [2,3], 'float', 3)
   await verify('div', [], 'float', 5, [floatSum, inputs[4].handle])
   await verify('mul', [], 'int', 714, [sum, inputs[1].handle])
+  const weightedA = await verify('mul', [2,4], 'float', 15)
+  const weightedB = await verify('mul', [3,4], 'float', 5)
+  await verify('add', [], 'float', 20, [weightedA, weightedB])
   const released = await tool('fhe_release', { handles: inputs.map(x => x.handle) })
   assert.equal(released.released, 5)
   console.log(JSON.stringify({ checkedAt: new Date().toISOString(), tlsVerified: true, actualMcpStdio: true,
