@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { readdir, readFile } from 'node:fs/promises'
 
 test('public package is limited to adapter modules, with no engine or owner implementation',async()=>{
-  const modules=['artifacts','contracts','coprocessor','fhe','index','server']
+  const modules=['artifacts','contracts','coprocessor','fhe','guide','index','server']
   assert.deepEqual((await readdir('src')).sort(),modules.map(n=>`${n}.ts`).sort())
   assert.deepEqual((await readdir('dist')).sort(),modules.flatMap(n=>[`${n}.js`,`${n}.d.ts`]).sort())
   for(const name of modules){

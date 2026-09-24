@@ -16,6 +16,15 @@ Aura's computation engine or used to substantiate Aura engine benchmarks.
 
 ## Run the public demonstration
 
+Start as a newcomer: “Show me the Aura demo. I am new to FHE; explain each step
+as we go.” The assistant explains the idea, prepares public encrypted samples,
+requests the calculation and saves the encrypted result. Let the audience ask
+questions; they do not need to choose tools, copy references or load keys.
+The optional MCP prompt **Show me encrypted computing** starts the same tour.
+
+The following tool sequence is a technical reference for the presenter. These
+names should not be prerequisites for the audience:
+
 1. Install the preview and configure the host with `--demo` using [Quickstart](QUICKSTART.md).
 2. Ask for `aura_start`. Show the mode, live operation list and read-this-first notes.
 3. Ask for `fhe_inputs`. Inputs 0 and 1 are public integers 25 and 17.

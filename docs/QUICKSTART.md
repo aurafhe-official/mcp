@@ -9,7 +9,7 @@ npm install -g @aurafhe/mcp@preview
 ```
 
 This installs the current MCP preview. No Git, npm account or local computation
-engine is needed. Use `@aurafhe/mcp@0.5.0-rc.5` to pin this exact release.
+engine is needed. Use `@aurafhe/mcp@0.5.0-rc.6` to pin this exact release.
 
 ## 2. Connect your app
 
@@ -76,15 +76,26 @@ Official references: [Cursor](https://prod.cursor.com/help/customization/mcp),
 [Claude Desktop](https://modelcontextprotocol.io/docs/develop/connect-local-servers),
 [VS Code](https://code.visualstudio.com/docs/agents/reference/mcp-configuration).
 
-## 3. Try it
+## 3. Say hello — no FHE knowledge needed
 
-Ask the agent to run `aura_start`, list its demo inputs, add integer inputs 0 and 1,
-then export the encrypted result. The fixed public inputs are `25`, `17`, `7.5`,
-`2.5` and `2`; the last three are floats.
+Send this message to your assistant:
 
-The agent receives a result ID. Its encrypted file is saved in
+> Show me the Aura demo. I am new to FHE; explain each step as we go.
+
+The assistant explains FHE as calculating with encrypted data. It prepares two
+public example shop totals (25 and 17), asks Aura to add their encrypted forms,
+and saves the encrypted result. You do not need to load keys, choose technical
+tools or copy identifiers. Ask questions at any point, or say “one step at a time.”
+
+If your app exposes MCP prompts, **Show me encrypted computing** (`aura_demo`)
+starts the same tour. The connection itself does not automatically send a message
+or run a calculation. Your host controls tool approvals and presentation.
+
+The expected sum is 42; this tour does not decrypt or verify the answer. The
+assistant explains that distinction in its recap. Its encrypted file is saved in
 `~/.aura-mcp/results/<resultId>.json`. Separate recipient processing reads the
-result; MCP does not decrypt or display the answer.
+result; MCP does not decrypt or display the answer. The other public examples
+(7.5, 2.5 and 2) can be used for a follow-up average. No private values are needed.
 
 For a terminal check, run `aura-fhe-mcp --check`. Running `aura-fhe-mcp` alone
 starts a server that waits for MCP requests; that wait is expected.
@@ -117,6 +128,8 @@ Protect input/output directories with OS permissions, including Windows ACLs.
 - Host cannot start MCP: regenerate settings after moving Node or the installation.
 - Connection error: check network, service certificate and credentials. Keep TLS verification enabled.
 - Inputs unavailable: use `--demo` or provision the encrypted bundle.
+- No welcome message: send “Show me the Aura demo”; connecting alone does not start a chat.
+- Agent shows identifiers or tool JSON: ask it to explain the returned guide in plain language.
 - `COMPUTE_ONLY_KEY_SCOPE_REQUIRED`: the service's role, key state or key ID is incompatible.
 - `OPERATION_UNAVAILABLE`: use `fhe_ops` to see available operations.
 - Handles expire after 30 minutes: reconnect to load fresh inputs. Exported files persist.

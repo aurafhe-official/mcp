@@ -1,5 +1,5 @@
 import * as z from 'zod/v4';
-export declare const VERSION = "0.5.0-rc.5";
+export declare const VERSION = "0.5.0-rc.6";
 export declare const DEFAULT_ENDPOINT = "https://api.afhe.io:8443";
 export declare const MAX_INPUTS = 128;
 export declare const MAX_RESPONSE: number;

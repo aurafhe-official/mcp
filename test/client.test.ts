@@ -221,3 +221,59 @@ test('computation metrics describe client elapsed time and size without claiming
   assert.match(result.metrics.timingScope,/not engine-only/)
   assert.ok(!('engineMs' in result.metrics))
 })
+
+test('a beginner can follow prompt and returned next actions through a real MCP conversation',async()=>{
+  const f=fixture(),session=new FheSession(f.remote,{demo:async()=>bundle,writeResult:async r=>{f.results.push(r)}})
+  const server=createFheServer(session),client=new Client({name:'beginner',version:'1'})
+  const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
+  const call=async(name:string,args:Record<string,unknown>={})=>{
+    const r=await client.callTool({name,arguments:args});assert.ok(!r.isError)
+    return JSON.parse((r.content as any)[0].text)
+  }
+  try {
+    assert.ok(client.getInstructions()?.includes('never heard of FHE'))
+    assert.ok((await client.listPrompts()).prompts.some(p=>p.name==='aura_demo'))
+    const prompt=await client.getPrompt({name:'aura_demo',arguments:{}})
+    assert.match((prompt.messages[0].content as any).text,/new to FHE/)
+    let response=await call('aura_start')
+    assert.equal(response.guide.step,1);assert.equal(f.calls.length,0)
+    assert.equal(response.guide.sample.expectedSumIsNotAnObservedResult,true)
+    for(const step of [2,3,4]) {
+      const action=response.guide.nextAction
+      response=await call(action.tool,action.arguments)
+      assert.equal(response.guide.step,step)
+      assert.ok(!JSON.stringify(response).includes('cipher-a'))
+    }
+    assert.equal(f.calls.length,1);assert.equal(f.results.length,1)
+    assert.equal(response.encrypted,true)
+    assert.match(response.guide.whyItMatters,/has not decrypted or verified/)
+    assert.equal(response.guide.nextAction,undefined)
+  }finally{await client.close();await server.close()}
+})
+
+test('beginner guidance handles missing setup, unavailable addition and expired samples honestly',async()=>{
+  const f=fixture(),empty=new FheSession(f.remote,{writeResult:async()=>{}})
+  assert.match((await empty.start()).guide.nextStep!,/--demo/)
+  assert.equal((await f.session.inputs()).guide,undefined)
+  const demo=new FheSession(f.remote,{demo:async()=>bundle,writeResult:async()=>{}})
+  f.remote.functions=async()=>({arity1:[],arity2:[],arity3:[]})
+  assert.equal((await demo.start()).guide.nextAction,undefined)
+  const handles=(await demo.inputs()).inputs.map(i=>i.handle)
+  await demo.release(handles)
+  assert.equal((await demo.inputs()).guide?.nextAction,undefined)
+  assert.equal(f.calls.length,0)
+})
+
+test('connection failures explain a next step without exposing backend diagnostics',async()=>{
+  const f=fixture();f.remote.health=async()=>{throw new Error('private-token-and-stack')}
+  const server=createFheServer(f.session),client=new Client({name:'help',version:'1'})
+  const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
+  try{
+    const response=await client.callTool({name:'aura_start',arguments:{}})
+    assert.equal(response.isError,true)
+    const text=(response.content as any)[0].text,body=JSON.parse(text)
+    assert.ok(body.help.message&&body.help.nextStep)
+    assert.ok(!text.includes('private-token-and-stack'))
+    assert.equal(body.guide,undefined)
+  }finally{await client.close();await server.close()}
+})

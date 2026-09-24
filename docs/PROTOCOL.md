@@ -25,6 +25,13 @@ Successful tool payloads and handled operation errors include `mode` as
 `keyCustodyModel` is `backend-keyed` for Demo mode and `not-verified` otherwise.
 `aura_start` is a connectivity/onboarding call, not an arithmetic proof.
 `aura_proof` explicitly marks missing evidence rather than returning a pass.
+The `aura_demo` MCP prompt starts a beginner conversation; it does not itself run
+tools. `aura_start` returns `guide` with a plain-language introduction. In Demo
+mode, preparation, compute and export return steps 2–4 with explanations and
+`nextAction` arguments where appropriate. The agent keeps identifiers behind the
+scenes and narrates the real results. Missing operations or expired samples do
+not produce a next action that claims they are usable. Handled failures return
+sanitized `help.message` and `help.nextStep`. Host approvals and rendering apply.
 `aura_roadmap` includes Aura's confirmation that its FHE database and FHE-AI LLM
 inference applications are completed and available on request via gen@afhe.io;
 `exposedThroughDemoMcp` is false for those separate applications.
