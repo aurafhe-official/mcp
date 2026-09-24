@@ -5,6 +5,15 @@ Computation runs remotely; your agent receives handles and encrypted result IDs.
 
 ## Install and connect
 
+**Choose your app:**
+
+[![Cursor](https://img.shields.io/badge/Cursor-Connect-111827?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#cursor)
+[![Claude Desktop](https://img.shields.io/badge/Claude_Desktop-Connect-D97757?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#claude-desktop)
+[![VS Code](https://img.shields.io/badge/VS_Code-Connect-007ACC?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#vs-code)
+[![Other MCP clients](https://img.shields.io/badge/Other_MCP_clients-Setup-475569?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#other-mcp-clients)
+
+Each button opens setup instructions for that app.
+
 Requires Node.js 20+. No Git or npm account is needed.
 
 ```sh

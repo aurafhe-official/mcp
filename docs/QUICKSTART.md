@@ -13,18 +13,59 @@ engine is needed. Use `@aurafhe/mcp@0.5.0-rc.4` to pin this exact release.
 
 ## 2. Connect your app
 
+[Cursor](#cursor) · [Claude Desktop](#claude-desktop) · [VS Code](#vs-code) ·
+[Other MCP clients](#other-mcp-clients)
+
+Install the package in step 1, then follow your app's instructions below.
+
+### Cursor
+
 ```sh
 aura-fhe-mcp --config cursor --demo
 ```
 
-Replace `cursor` with `claude` or `vscode`. Copy the generated Aura entry into
-your host's settings, preserve existing servers, and reconnect.
+Add the generated `aura` entry under `mcpServers` in your project's
+`.cursor/mcp.json` or your user `~/.cursor/mcp.json`. Preserve existing entries,
+then reconnect or restart Cursor. Confirm that Aura's six tools appear.
 
-| Host | Settings |
-| --- | --- |
-| Cursor | Project `.cursor/mcp.json` or user `~/.cursor/mcp.json` |
-| Claude Desktop | Developer settings → Edit Config |
-| VS Code | `.vscode/mcp.json` |
+### Claude Desktop
+
+```sh
+aura-fhe-mcp --config claude --demo
+```
+
+Open Claude Desktop's **Settings → Developer → Edit Config**. Add the generated
+`aura` entry under `mcpServers`, preserving existing entries. Save and fully
+restart Claude Desktop. Confirm that Aura's six tools appear.
+
+This is for the desktop app's local MCP connection, not a web connector URL.
+
+### VS Code
+
+```sh
+aura-fhe-mcp --config vscode --demo
+```
+
+Add the generated `aura` entry under `servers` in `.vscode/mcp.json`, preserving
+existing entries. Start Aura from VS Code's MCP controls, review any trust prompt,
+and enable its tools for your agent.
+
+### Other MCP clients
+
+Use a client that supports local **stdio MCP** servers. Generate the connection:
+
+```sh
+aura-fhe-mcp --config claude --demo
+```
+
+Copy the `command` and `args` values from `mcpServers.aura` into your client's
+local MCP configuration. Clients may use a different outer configuration format;
+follow their documentation. Keep each argument as a separate array entry.
+
+Clients that accept only a hosted HTTPS/OAuth MCP URL cannot use this local
+connection directly. Aura's coprocessor API address is not an MCP server URL.
+
+### How the generated settings work
 
 The generator prints configuration; it does not edit your files. It uses the
 absolute paths to your installed Node and MCP, so the host does not download
