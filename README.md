@@ -8,7 +8,7 @@ Computation runs remotely; your agent receives handles and encrypted result IDs.
 Requires Node.js 20+ and Git for this GitHub installation.
 
 ```sh
-npm install -g "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp"
+npm install -g --install-links "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp"
 aura-fhe-mcp --config cursor --demo
 ```
 

@@ -5,7 +5,7 @@
 Install Node.js 20+ and Git, then run:
 
 ```sh
-npm install -g "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp"
+npm install -g --install-links "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp"
 ```
 
 This installs the reviewed preview branch. No npm account or local computation
