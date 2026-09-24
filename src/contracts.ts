@@ -1,6 +1,6 @@
 import * as z from 'zod/v4'
 
-export const VERSION = '0.5.0-rc.3'
+export const VERSION = '0.5.0-rc.4'
 export const DEFAULT_ENDPOINT = 'https://api.afhe.io:8443'
 export const MAX_INPUTS = 128
 export const MAX_RESPONSE = 4 * 1024 * 1024

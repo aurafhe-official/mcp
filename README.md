@@ -1,57 +1,52 @@
 # AURA MCP
 
-Connect an MCP-compatible agent to Aura's coprocessor. Computation stays in the
-remote service; this repository contains the connection adapter, not the engine.
+Connect your AI agent to Aura's coprocessor for encrypted arithmetic.
+Computation runs remotely; your agent receives handles and encrypted result IDs.
 
-**Diagnostic preview: synthetic data only. The confidentiality release gate is
-still blocked. Working arithmetic and valid HTTPS do not establish that Aura
-cannot recover inputs.**
+## Install and connect
 
-## Connect
-
-Install Node.js 20+ and Git. This candidate is on the PR branch, not npm.
+Requires Node.js 20+ and Git for this GitHub installation.
 
 ```sh
-npx -y github:aurafhe-official/mcp#rebuild/owner-controlled-mcp --check
-npx -y github:aurafhe-official/mcp#rebuild/owner-controlled-mcp --config cursor --demo
+npm install -g "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp"
+aura-fhe-mcp --config cursor --demo
 ```
 
-Replace `cursor` with `claude` or `vscode`. Copy the generated JSON into your
-host's MCP settings and reconnect. The generator handles Windows and contains no
-credentials. It prints settings without editing existing configuration.
-[Host locations and troubleshooting](docs/QUICKSTART.md).
+Replace `cursor` with `claude` or `vscode`. Copy the generated Aura entry into
+your app's MCP settings, preserve any existing servers, and reconnect.
+The app starts the installed MCP automatically. No npm account is required.
+[Where to paste the settings](docs/QUICKSTART.md).
 
 Then ask your agent:
 
-> Check Aura, list its demo input handles, add integer inputs 0 and 1, and export
-> the encrypted result.
+> Check Aura, list its demo inputs, add integer inputs 0 and 1, and export the
+> encrypted result.
 
-The demo uses only fixed public examples. It sends arithmetic to the live
-coprocessor and gives the agent an encrypted result reference. Decryption is a
-separate recipient action. Omit `--demo` for a connection that checks status and
-operations until the operator provisions encrypted inputs.
+For a quick terminal connection check:
+
+```sh
+aura-fhe-mcp --check
+```
+
+The reviewed preview currently installs from the GitHub branch above. The npm
+registry package is not yet published. This page will switch to the registry
+install command after publication and a fresh installation check.
 
 ## What works
 
-Six tools: `fhe_status`, `fhe_ops`, `fhe_inputs`, `fhe_compute`, `fhe_export`,
-`fhe_release`. Addition, subtraction, multiplication and division work on integer
-and float ciphertexts when advertised by the connected service. Sum and product
-can combine multiple handles. An average is a sum followed by division by an
-owner-supplied encrypted count. [Formats and limits](docs/PROTOCOL.md).
+- Integer and float addition, subtraction, multiplication and division.
+- Composed sums, products and averages through the coprocessor.
+- Six MCP tools for status, operations, inputs, computation, export and release.
+- Encrypted result files for separate recipient processing.
 
-MCP accepts no source values, key files, arbitrary paths or engine function names.
-Export writes an encrypted file to the configured recipient directory and returns
-only its ID. No native library, cryptographic implementation, engine parameter set
-or owner SDK is included in this package.
+The fixed demo uses public sample numbers. MCP does not accept custom plaintext,
+secret keys or arbitrary file paths. The public package contains only the
+connection adapter; the computation implementation stays on the service.
 
-The hosted demo also supports backend decryption. Operator-provisioned bundles
-require an authenticated compute-only worker with the matching key ID. That
-check does not prove cryptographic confidentiality. The existing engine release
-gate remains in force. [Privacy boundary](docs/SECURITY-MODEL.md) ·
-[Release status](release-status.json).
+**Synthetic-data preview. The public demo service can decrypt its demo data;
+owner-only confidentiality is not verified and production use remains blocked.**
+Custom encrypted inputs require a provisioned authenticated compute-only service.
+This release provides numeric arithmetic, not arbitrary FHE applications.
 
-This is a local stdio MCP adapter connecting over HTTPS. The coprocessor API is
-not a hosted MCP URL. Shared inbound HTTP is not provided.
-
-[Setup](docs/QUICKSTART.md) · [Verification](docs/VERIFICATION.md) ·
-[Migration](docs/MIGRATION.md) · [Security](SECURITY.md)
+[Setup](docs/QUICKSTART.md) · [Tools](docs/PROTOCOL.md) ·
+[Verification](docs/VERIFICATION.md) · [Security](SECURITY.md)

@@ -2,7 +2,8 @@
 
 Use Node 20+. Run `npm ci --ignore-scripts`, `npm test`, `npm run test:package`
 and `git diff --exit-code -- dist` after rebuilding. Compiled output is committed
-for pinned GitHub installation.
+for npm and pinned GitHub installation. Also run `npm run test:history` in a full
+checkout. After the history cleanup, re-clone rather than merging old history.
 
 This repository is the public client boundary. Do not add engine bindings,
 algorithms, key generation, proprietary parameters, native binaries, private

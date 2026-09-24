@@ -8,8 +8,7 @@ import { readBundle, resultWriter } from './artifacts.js'
 import { FheSession } from './fhe.js'
 import { createFheServer } from './server.js'
 
-const install = 'github:aurafhe-official/mcp#rebuild/owner-controlled-mcp'
-const help = `AURA MCP ${VERSION} — diagnostic preview (synthetic data only)
+const help = `AURA MCP ${VERSION} â€” diagnostic preview (synthetic data only)
   aura-fhe-mcp                    Start the MCP tool connection
   aura-fhe-mcp --demo             Enable fixed public example inputs
   aura-fhe-mcp --check            Check HTTPS and available operations
@@ -17,7 +16,7 @@ const help = `AURA MCP ${VERSION} — diagnostic preview (synthetic data only)
   aura-fhe-mcp --config cursor --demo
   aura-fhe-mcp --version
 
-Node.js 20+ and Git are needed for installation from GitHub.
+Node.js 20+ is required. Generated settings use this installed MCP directly.
 The demo uses 25, 17, 7.5, 2.5 and 2. No keys or engine installation needed.
 Optional AURA_COPROCESSOR_URL and AURA_ACCESS_TOKEN configure the remote service.
 AURA_INPUT_BUNDLE selects an encrypted input file, outside model context.
@@ -31,8 +30,7 @@ async function main() {
   if (args.length === 1 && args[0] === '--help') { console.log(help); return }
   const demo = args.includes('--demo')
   if (args[0] === '--config' && ['cursor','claude','vscode'].includes(args[1]) && (args.length === 2 || (args.length === 3 && args[2] === '--demo'))) {
-    const windows = process.platform === 'win32'
-    const config = { command: windows ? 'cmd' : 'npx', args: [...(windows ? ['/d','/c','npx'] : []), '-y', install, ...(demo ? ['--demo'] : [])] }
+    const config = { command: process.execPath, args: [path.resolve(process.argv[1]), ...(demo ? ['--demo'] : [])] }
     console.log(JSON.stringify(args[1] === 'vscode' ? { servers: { aura: { type: 'stdio', ...config } } } : { mcpServers: { aura: config } }, null, 2))
     return
   }

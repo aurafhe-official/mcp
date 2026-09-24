@@ -7,7 +7,7 @@ gate remains blocked. Working arithmetic is not evidence that the processing
 provider cannot recover inputs.**
 
 The public package contains the connection adapter, not proprietary engine code,
-native bindings, SDK parameter sets or key material. Engine remediation and
+native bindings, private parameters or key material. Engine remediation and
 independent review remain prerequisites for real-data deployment. Removing
 implementation details from GitHub does not clear that release gate.
 

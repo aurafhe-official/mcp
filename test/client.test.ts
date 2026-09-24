@@ -165,7 +165,7 @@ test('config generator and help need no credentials, and never echo environment 
   for(const host of ['cursor','claude','vscode']){
     const {stdout}=await run(process.execPath,['dist/index.js','--config',host,'--demo'],{env:{...process.env,AURA_ACCESS_TOKEN:'must-not-appear'}})
     const config=JSON.parse(stdout),entry=(config.servers??config.mcpServers).aura
-    assert.equal(entry.args.at(-1),'--demo');assert.ok(!stdout.includes('must-not-appear'))
+    assert.equal(entry.args.at(-1),'--demo');assert.equal(entry.command,process.execPath);assert.equal(entry.args[0],path.resolve('dist/index.js'));assert.ok(!stdout.includes('must-not-appear'))
   }
   assert.match((await run(process.execPath,['dist/index.js','--help'])).stdout,/synthetic data only/)
   await assert.rejects(run(process.execPath,['dist/index.js','--http']))
