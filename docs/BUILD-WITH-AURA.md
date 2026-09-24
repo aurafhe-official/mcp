@@ -80,6 +80,7 @@ Encrypted databases, messaging and private AI apply the same broad principle
 through application-specific designs; the numeric demo does not reproduce those
 applications or establish their privacy properties.
 
-Try the separate AI application at [chat.afhe.io](https://chat.afhe.io), with
+The separate AI Chat application at [chat.afhe.io](https://chat.afhe.io) is
+**invitation-only**; request an invitation via **gen@afhe.io**. See the
 [current access guidance](AI-DEMO.md), or discuss an application evaluation via
 **gen@afhe.io**. [Compare the three experiences](EXPERIENCES.md).

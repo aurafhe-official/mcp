@@ -12,12 +12,13 @@ FHE（全同态加密）让软件能够对加密状态的数据进行计算。Au
 
 | 体验 Aura 的三种方式 | 入口 |
 | --- | --- |
-| **1. 体验 Aura AI**：业务问题与追问 | [chat.afhe.io](https://chat.afhe.io) · [访问状态与演示指南](docs/AI-DEMO.md) |
+| **1. Aura AI Chat（仅限受邀用户）**：业务问题与追问 | [chat.afhe.io](https://chat.afhe.io) · 联系 **gen@afhe.io** 申请邀请 · [演示指南](docs/AI-DEMO.md) |
 | **2. 评估应用**：加密数据库、通讯或私有推理 | 联系 **gen@afhe.io** |
 | **3. 通过 MCP 学习与开发**：理解 FHE、接入工具、探索应用 | [安装步骤](docs/QUICKSTART.md) · [应用集成指南](docs/BUILD-WITH-AURA.md) |
 
 [三种体验、密钥与证据的区别](docs/EXPERIENCES.md)。FHE 是基础层；应用将其
-用于具体任务；MCP 负责连接已开放的工具。试用入口不可用时，请联系团队安排演示。
+用于具体任务；MCP 负责连接已开放的工具。**AI Chat 仅限受邀用户访问**，请通过
+**gen@afhe.io** 申请邀请或预约演示。公开 MCP 学习演示无需 Chat 邀请。
 
 MCP 帮助用户理解加密、密钥、密文计算与结果读取的完整流程，并把已支持的计算
 接入自己的应用。公开样例只需安装与客户端配置；机密应用还需配置本地加解密、

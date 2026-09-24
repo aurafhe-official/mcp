@@ -6,7 +6,7 @@ connects an assistant to the operations an application or service exposes.
 
 | Experience | What a visitor does | What it demonstrates |
 | --- | --- | --- |
-| **Aura AI** | Enter through [chat.afhe.io](https://chat.afhe.io), try an invented business question, then ask a follow-up | The separate AI application and its observed response; see [access and demonstration guidance](AI-DEMO.md) |
+| **Aura AI Chat — invitation-only** | Existing invitees enter through [chat.afhe.io](https://chat.afhe.io); request an invitation via **gen@afhe.io** | The separate AI application and its observed response; see [access and demonstration guidance](AI-DEMO.md). Public MCP learning does not require a Chat invitation. |
 | **Applications on Aura** | Request an evaluation of encrypted databases, messaging or private inference via **gen@afhe.io** | A specific application, with its own supported operations, client and key-custody design |
 | **Aura MCP** | Learn FHE step by step, connect supported computations and plan an application integration | The numeric workflow, key-custody distinctions and integration requirements shipped in this package |
 

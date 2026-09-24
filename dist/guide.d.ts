@@ -54,6 +54,9 @@ export declare function applicationStory(): {
             walkthrough: string;
             browserApplication: string;
             availability: string;
+            policy: string;
+            invitationRequired: boolean;
+            requestInvitation: string;
             fallback: string;
             connectionAdvice: string;
         };

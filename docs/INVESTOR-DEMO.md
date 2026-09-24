@@ -5,7 +5,8 @@ application, and MCP connects assistants to the capabilities exposed here.
 The numeric lesson is an optional explanation and integration check.
 
 The visitor journey is **Aura AI → application evaluations → MCP integration**.
-Use [chat.afhe.io](https://chat.afhe.io) as the chat application address, subject to the
+AI Chat is **invitation-only**. Arrange an invitation via **gen@afhe.io** before
+the demonstration. Existing invitees use [chat.afhe.io](https://chat.afhe.io), subject to the
 [current access check](AI-DEMO.md). [One foundation, three experiences](EXPERIENCES.md)
 provides a comparison that investors can read without understanding cryptography.
 

@@ -14,13 +14,15 @@ internal benchmark, not a speed measured by this MCP or an independent validatio
 
 | Three ways to experience Aura | Where to go |
 | --- | --- |
-| **1. Try Aura AI** with a business question and a follow-up | [chat.afhe.io](https://chat.afhe.io) · [Demo guide and access status](docs/AI-DEMO.md) |
+| **1. Aura AI Chat — invitation-only**: a business question and a follow-up | [chat.afhe.io](https://chat.afhe.io) · [Request an invitation](mailto:gen@afhe.io?subject=Aura%20AI%20Chat%20invitation) · [Demo guide](docs/AI-DEMO.md) |
 | **2. Evaluate applications**: encrypted databases, messaging or private inference | [Arrange an evaluation](mailto:gen@afhe.io) |
 | **3. Learn and build through MCP** from Cursor, Claude Desktop or VS Code | [Install and connect](#install-and-connect) · [Application integration guide](docs/BUILD-WITH-AURA.md) |
 
 [Understand the differences, keys and evidence](docs/EXPERIENCES.md). Start with
 the AI application for the product experience; use MCP to explore the supported
-numeric integration. If trial access is unavailable, arrange a demo via **gen@afhe.io**.
+numeric integration. **AI Chat is invitation-only.** Request an invitation or
+arranged demonstration via **gen@afhe.io**. The public MCP learning demo is open
+and does not require a Chat invitation.
 
 MCP helps users **learn how FHE works, integrate supported encrypted calculations
 into applications, and explore their potential**. Start with a guided public
