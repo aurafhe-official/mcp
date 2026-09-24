@@ -1,112 +1,125 @@
 # Connect Aura MCP
 
-## 1. Install
+Install on the same computer that runs your assistant. You need
+[Node.js 20+](https://nodejs.org/en/download); the current LTS is a suitable choice.
+On Windows, open PowerShell. On macOS or Linux, open Terminal.
+No Git, npm account or local computation engine is required.
 
-Install Node.js 20+, then run:
+Choose [Cursor](#cursor), [Claude Desktop](#claude-desktop), [VS Code](#vs-code)
+or [another local MCP client](#other-mcp-clients). Each section includes installation.
+
+## Cursor
+
+Run in your terminal:
 
 ```sh
 npm install -g @aurafhe/mcp@preview
-```
-
-This installs the current MCP preview. No Git, npm account or local computation
-engine is needed. Use `@aurafhe/mcp@0.5.0-rc.6` to pin this exact release.
-
-## 2. Connect your app
-
-[Cursor](#cursor) · [Claude Desktop](#claude-desktop) · [VS Code](#vs-code) ·
-[Other MCP clients](#other-mcp-clients)
-
-Install the package in step 1, then follow your app's instructions below.
-
-### Cursor
-
-```sh
 aura-fhe-mcp --config cursor --demo
 ```
 
-Add the generated `aura` entry under `mcpServers` in your project's
-`.cursor/mcp.json` or your user `~/.cursor/mcp.json`. Preserve existing entries,
-then reconnect or restart Cursor. Confirm that Aura's nine tools appear.
+Open your project folder in Cursor. Create or open `.cursor/mcp.json` inside it.
+For a new file, paste the **entire generated JSON** and save. If it already has
+servers, copy only the generated `aura` entry into the existing `mcpServers`
+object; preserve the other entries. A user-wide file is also supported at
+`~/.cursor/mcp.json` (Windows: `%USERPROFILE%\.cursor\mcp.json`).
 
-### Claude Desktop
+Reconnect or restart Cursor, enable Aura's tools, then use the first message below.
+
+## Claude Desktop
+
+Run in your terminal:
 
 ```sh
+npm install -g @aurafhe/mcp@preview
 aura-fhe-mcp --config claude --demo
 ```
 
-Open Claude Desktop's **Settings → Developer → Edit Config**. Add the generated
-`aura` entry under `mcpServers`, preserving existing entries. Save and fully
-restart Claude Desktop. Confirm that Aura's nine tools appear.
+Open **Settings → Developer → Edit Config**. For an empty configuration, paste
+the entire generated JSON. If `mcpServers` already exists, add only its generated
+`aura` entry and preserve the others. Save and fully quit/reopen Claude Desktop.
+This is the desktop app's local MCP connection, not a web connector URL.
 
-This is for the desktop app's local MCP connection, not a web connector URL.
+## VS Code
 
-### VS Code
+Run in your terminal:
 
 ```sh
+npm install -g @aurafhe/mcp@preview
 aura-fhe-mcp --config vscode --demo
 ```
 
-Add the generated `aura` entry under `servers` in `.vscode/mcp.json`, preserving
-existing entries. Start Aura from VS Code's MCP controls, review any trust prompt,
-and enable its tools for your agent.
+In your project, create or open `.vscode/mcp.json`. For a new file, paste the entire
+generated JSON. Otherwise add only the `aura` entry under its existing `servers`
+object. Save, start Aura from VS Code's MCP controls, review the trust prompt and
+enable its tools for your agent. User-wide configuration is available through
+the command palette's **MCP: Open User Configuration** command.
 
-### Other MCP clients
+## Other MCP clients
 
-Use a client that supports local **stdio MCP** servers. Generate the connection:
+Use a client that supports local stdio MCP servers. Run:
 
 ```sh
+npm install -g @aurafhe/mcp@preview
 aura-fhe-mcp --config claude --demo
 ```
 
-Copy the `command` and `args` values from `mcpServers.aura` into your client's
-local MCP configuration. Clients may use a different outer configuration format;
-follow their documentation. Keep each argument as a separate array entry.
+Copy the generated `command` and `args` from `mcpServers.aura` into your client's
+local server settings. Its outer configuration format may differ; follow that
+client's instructions. Clients that accept only hosted HTTPS/OAuth URLs cannot
+use this local connection directly. Neither the coprocessor API nor Aura Chat
+is a hosted MCP URL.
 
-Clients that accept only a hosted HTTPS/OAuth MCP URL cannot use this local
-connection directly. Aura's coprocessor API address is not an MCP server URL.
+## Your first message
 
-### How the generated settings work
+> What can I do with Aura? Show me the AI application first, then explain what I can run here.
 
-The generator prints configuration; it does not edit your files. It uses the
-absolute paths to your installed Node and MCP, so the host does not download
-packages at startup. Generate settings on the machine that runs the MCP. After
-moving the installation or changing Node's location, regenerate the settings.
+The assistant introduces Aura AI and the attributed website benchmark, then offers
+the [application walkthrough](AI-DEMO.md), an optional learning lesson, or the
+current tool reference. It does not automatically start arithmetic or claim to
+run the separate AI model. This overview also works when the compute service is
+unreachable; `fhe_status` separately checks the connection.
+
+If the app lists MCP prompts, choose **What can I do with Aura?** (`aura_demo`).
+Connecting makes nine tools available; sending your message starts the experience.
+The host controls approvals and presentation.
+
+## Optional: learn with public encrypted samples
+
+> Teach me encrypted computation using Aura's public sample lesson.
+
+The assistant uses `aura_start` with `experience: "learn"`, introduces public shop
+totals 25 and 17, prepares their encrypted forms, requests addition and saves an
+encrypted result. Their expected sum is 42; the MCP does not decrypt or verify it.
+The [separate synthetic verifier](VERIFICATION.md) checks actual numerical results.
+Other public samples, 7.5, 2.5 and 2, support an average. The `aura_learn` prompt
+starts the same lesson. No private data, key loading or copied identifiers are needed.
+
+Results are saved in `~/.aura-mcp/results/<resultId>.json`; separate recipient
+processing reads them. This lesson uses Aura-managed demo keys and public data.
+
+## Installation and update details
+
+The generator prints settings; it does not edit configuration files. It uses
+absolute paths to the installed Node and MCP. Generate settings on the machine
+running the client. **Do not paste `/exec-daemon/node` or `/workspace/...` paths
+from someone else's cloud session into a local installation.**
+
+Current release: `0.5.0-rc.7` preview. Pin it with `@aurafhe/mcp@0.5.0-rc.7`.
+To update, repeat installation, regenerate settings, then fully restart the host.
+After moving Node or the package, regenerate settings too.
+For a terminal service check use `aura-fhe-mcp --check`; running the bare command
+starts a server that waits for MCP requests, which is expected.
 
 Official references: [Cursor](https://prod.cursor.com/help/customization/mcp),
 [Claude Desktop](https://modelcontextprotocol.io/docs/develop/connect-local-servers),
 [VS Code](https://code.visualstudio.com/docs/agents/reference/mcp-configuration).
 
-## 3. Say hello — no FHE knowledge needed
+## Operator integration
 
-Send this message to your assistant:
-
-> Show me the Aura demo. I am new to FHE; explain each step as we go.
-
-The assistant explains FHE as calculating with encrypted data. It prepares two
-public example shop totals (25 and 17), asks Aura to add their encrypted forms,
-and saves the encrypted result. You do not need to load keys, choose technical
-tools or copy identifiers. Ask questions at any point, or say “one step at a time.”
-
-If your app exposes MCP prompts, **Show me encrypted computing** (`aura_demo`)
-starts the same tour. The connection itself does not automatically send a message
-or run a calculation. Your host controls tool approvals and presentation.
-
-The expected sum is 42; this tour does not decrypt or verify the answer. The
-assistant explains that distinction in its recap. Its encrypted file is saved in
-`~/.aura-mcp/results/<resultId>.json`. Separate recipient processing reads the
-result; MCP does not decrypt or display the answer. The other public examples
-(7.5, 2.5 and 2) can be used for a follow-up average. No private values are needed.
-
-For a terminal check, run `aura-fhe-mcp --check`. Running `aura-fhe-mcp` alone
-starts a server that waits for MCP requests; that wait is expected.
-
-## Application configuration
-
-Without `--demo`, the MCP can discover tools and check the service. Computing
-custom encrypted inputs requires an operator-provisioned [input bundle](PROTOCOL.md),
-matching authenticated compute-only worker and separate recipient processing.
-The present release is limited to synthetic integration while confidentiality
-review remains blocked. Do not supply confidential customer data.
+Without `--demo`, the connection can show the overview, discover tools and check
+the service. Custom encrypted inputs need an operator-provisioned [bundle](PROTOCOL.md),
+matching authenticated compute-only worker and separate recipient integration.
+Neither mode establishes confidential production readiness.
 
 | Environment variable | Purpose |
 | --- | --- |
@@ -115,25 +128,22 @@ review remains blocked. Do not supply confidential customer data.
 | `AURA_INPUT_BUNDLE` | Absolute path to encrypted input JSON |
 | `AURA_RESULT_DIR` | Absolute export directory; default `~/.aura-mcp/results` |
 
-Set these in protected host configuration outside chat. Bundle computation
-requires `/health` to declare `role: "compute"`, `secretKeyLoaded: false` and
-a matching `keyId`. The public demo endpoint does not meet that contract.
-Metadata alone does not prove key isolation. Demo and bundle mode cannot be combined.
-Protect input/output directories with OS permissions, including Windows ACLs.
+Keep credentials outside chat. Bundle computation requires the worker to declare
+`role: "compute"`, `secretKeyLoaded: false` and a matching `keyId`; those declarations
+alone do not prove isolation. Demo and bundle cannot be combined. Protect files
+with operating-system permissions. [Security details](SECURITY-MODEL.md).
 
 ## Troubleshooting
 
-- Command missing: confirm Node/npm and the npm global bin directory are on PATH;
-  restart your terminal after installing them.
-- Host cannot start MCP: regenerate settings after moving Node or the installation.
-- Connection error: check network, service certificate and credentials. Keep TLS verification enabled.
-- Inputs unavailable: use `--demo` or provision the encrypted bundle.
-- No welcome message: send “Show me the Aura demo”; connecting alone does not start a chat.
-- Agent shows identifiers or tool JSON: ask it to explain the returned guide in plain language.
-- `COMPUTE_ONLY_KEY_SCOPE_REQUIRED`: the service's role, key state or key ID is incompatible.
-- `OPERATION_UNAVAILABLE`: use `fhe_ops` to see available operations.
-- Handles expire after 30 minutes: reconnect to load fresh inputs. Exported files persist.
-- `LEGACY_CONFIGURATION_UNSUPPORTED`: remove old `AFHE_*`, native-library and draft key settings; use only the variables above.
-
-The coprocessor API URL is not a hosted MCP/OAuth address. Configure a local
-command-based MCP server using the generated settings.
+- Command missing: finish installing Node, reopen the terminal and check npm's global command path.
+- Host cannot start Aura: regenerate settings locally and fully restart the app.
+- Still seeing the old tour: reinstall the package and reconnect the host process.
+- No welcome message: send the first message above; connecting does not start chat.
+- Service error: check the connection, certificate and credentials; keep HTTPS verification enabled.
+- Aura Chat certificate error: use the contact in the [AI walkthrough](AI-DEMO.md); do not bypass the warning.
+- Inputs unavailable: regenerate your configuration with `--demo` for public examples.
+- Agent displays identifiers: ask it to explain the returned guide in plain language.
+- `COMPUTE_ONLY_KEY_SCOPE_REQUIRED`: operator bundle and worker key scope do not match.
+- `OPERATION_UNAVAILABLE`: choose an operation advertised by `fhe_ops`.
+- References expire after 30 minutes: reconnect for fresh public samples; saved files persist.
+- `LEGACY_CONFIGURATION_UNSUPPORTED`: remove old `AFHE_*`, native-library and draft key settings.

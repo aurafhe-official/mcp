@@ -7,7 +7,7 @@ cryptographic audit or production release.
 | --- | --- |
 | Hosted HTTPS certificate | Verified for api.afhe.io; expires 27 October 2026 |
 | Health and function discovery | Successful over verified HTTPS |
-| Local regression suite | 29 tests passed, zero skipped |
+| Local regression suite | 32 tests passed, zero skipped |
 | Actual stdio MCP -> hosted compute -> encrypted file -> external verification | 13 fixed synthetic arithmetic checks passed |
 | Service key configuration | No load, key generation or initialization requested |
 | Confidentiality release gate | Still blocked |
@@ -33,11 +33,17 @@ CI runs offline/package checks on Windows and Ubuntu with Node 20, 22 and 24.
 Independent engine confidentiality review, production key isolation and multi-tenant
 authorization remain outside these results. No production sign-off is implied.
 
-The rc.6 verifier also checks the beginner prompt, four guide stages, executable
+The rc.7 verifier also checks the application overview, attributed website benchmark,
+optional learning prompt, four guide stages, executable
 next actions, onboarding and evidence labels. A conversation test follows the
 returned actions through a real MCP session; failure and missing-setup tests
 ensure no invented completion. The host's natural-language presentation varies
 by app and model; these checks verify the instructions and protocol flow.
+Offline tests confirm the overview does not make a network call, invent a live
+AI measurement or expose an inference tool. Explicit learning requests still
+surface connection failures. Follow-up exports use a calculation-neutral recap.
+Package verification installs rc.7, exercises its generated configuration and
+checks 27 approved files, including the application walkthrough.
 Computation output
 includes client elapsed time and ciphertext size; the verifier reports actual
 absolute error. These are sample measurements, not an engine-only benchmark.

@@ -1,142 +1,104 @@
 # AURA MCP
 
-**FHE is the base layer. MCP makes encrypted computation accessible to AI agents.**
+**Connect your assistant to Aura's encrypted computation. Start with the AI application, then explore the tools.**
 
-[中文说明](README.zh-CN.md) · [Investor walkthrough](docs/INVESTOR-DEMO.md)
+FHE lets software calculate with data in its encrypted form. Aura's flagship AI
+application gives that foundation a practical purpose: useful AI with a defined
+privacy and key-custody model. MCP is the connection from your assistant to the
+capabilities exposed here.
 
-**New to FHE? Start here.** Fully homomorphic encryption (FHE) lets us calculate
-with data in its encrypted form. Connect your assistant, then say:
+**Aura reports GPT-OSS-20B encrypted inference at 20+ tokens/second on one RTX PRO
+6000 Blackwell GPU**, with prompt read-in below 2.3 seconds. This is the website's
+internal benchmark, not a speed measured by this MCP or an independent validation.
+[Benchmark source and scope](https://afhe.io/#status).
 
-> Show me the Aura demo. I am new to FHE; explain each step as we go.
+| Start with your goal | Where to go |
+| --- | --- |
+| See the AI application and a useful business example | [Explore Aura AI](docs/AI-DEMO.md) |
+| Connect Cursor, Claude Desktop or VS Code | [Install and connect](#install-and-connect) |
+| Understand encrypted computation with public samples | [Optional learning lesson](#try-the-optional-learning-lesson) |
 
-Your assistant introduces a simple example, prepares encrypted samples, requests
-the calculation from Aura and saves the encrypted result. It explains what each
-step means. No key setup, private data or knowledge of tool names is needed.
-
-The first example combines two public shop totals, 25 and 17. Their expected sum
-is 42. The tour returns an **encrypted result**, not a decrypted or verified 42.
-Connect Cursor, Claude Desktop, VS Code or another compatible MCP client below.
-
-## Read this first
-
-**What this project demonstrates.** The public demo connects an agent to remote
-ciphertext computation using fixed public examples. Install only Node.js and
-the MCP locally; the computation engine runs on Aura's service. A separate
-synthetic verifier measures correctness, error and request latency.
-
-**What production looks like.** For confidentiality against the compute provider,
-the owner generates keys and encrypts in its own environment, the server computes
-on ciphertext, and an authorized recipient decrypts locally. This release provides
-a demo and an operator-bundle integration path, not a verified client-key workflow.
-Demo mode is **backend-keyed**: the demonstration backend manages demo keys and
-can decrypt its demo data.
-
-**What is open today.** The MCP adapter, adapter tests and synthetic live verifier
-are public. Client cryptography, the coprocessor implementation and a cryptographic
-proof suite are not distributed here. Further open-source scope and dates will
-be announced separately by Aura.
+The AI application is accessed separately; **this package does not run model
+inference**. Its executable tools provide encrypted numeric computation. Aura's
+confirmed FHE database and FHE-AI LLM inference applications are completed and
+available on request via **gen@afhe.io**. [中文说明](README.zh-CN.md).
 
 ## Install and connect
 
-**Choose your app:**
-
-[![Cursor](https://img.shields.io/badge/Cursor-Connect-111827?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#cursor)
-[![Claude Desktop](https://img.shields.io/badge/Claude_Desktop-Connect-D97757?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#claude-desktop)
-[![VS Code](https://img.shields.io/badge/VS_Code-Connect-007ACC?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#vs-code)
+[![Cursor](https://img.shields.io/badge/Cursor-Setup-111827?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#cursor)
+[![Claude Desktop](https://img.shields.io/badge/Claude_Desktop-Setup-D97757?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#claude-desktop)
+[![VS Code](https://img.shields.io/badge/VS_Code-Setup-007ACC?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#vs-code)
 [![Other MCP clients](https://img.shields.io/badge/Other_MCP_clients-Setup-475569?style=for-the-badge)](https://github.com/aurafhe-official/mcp/blob/main/docs/QUICKSTART.md#other-mcp-clients)
 
-Each button opens setup instructions for that app.
-
-Requires Node.js 20+. No Git or npm account is needed.
+These buttons open instructions. Install [Node.js 20+](https://nodejs.org/en/download),
+then run these two commands in Terminal (macOS/Linux) or PowerShell (Windows):
 
 ```sh
 npm install -g @aurafhe/mcp@preview
 aura-fhe-mcp --config cursor --demo
 ```
 
-Replace `cursor` with `claude` or `vscode`. Copy the generated Aura entry into
-your app's MCP settings, preserve any existing servers, and reconnect.
-The app starts the installed MCP automatically. No npm account is required.
-[Where to paste the settings](docs/QUICKSTART.md).
+Use `claude` or `vscode` instead of `cursor` for those apps. Paste the generated
+settings into your app's MCP configuration and reconnect.
+[Exact steps and paste locations](docs/QUICKSTART.md). No Git, npm account, local
+computation engine or demo key setup is needed. Settings must be generated on the
+machine that runs the MCP; paths from a cloud workspace do not work on your laptop.
 
-Then ask your agent:
+Then ask:
 
-> Show me the Aura demo. I am new to FHE; explain each step as we go.
+> What can I do with Aura? Show me the AI application first, then explain what I can run here.
 
-The assistant guides you through four steps:
+Your assistant explains the published AI benchmark and offers three routes:
+explore the separate AI application, learn with public encrypted samples, or
+build with the current numeric tools. Connecting alone does not start a chat or
+calculation. In clients with MCP prompts, choose **What can I do with Aura?**
+(`aura_demo`). The overview works without a backend connection; a separate status
+check or learning lesson checks the service.
 
-1. **Understand:** what encrypted computing means and which public examples we use.
-2. **Prepare:** obtain encrypted versions of the example numbers.
-3. **Calculate:** ask Aura to combine them and receive an encrypted result.
-4. **Save and explain:** save the result, recap what happened, and choose what to try next.
+This is release **0.5.0-rc.7**, an explicitly labelled preview. To pin it, install
+`@aurafhe/mcp@0.5.0-rc.7`. To update an existing installation, run the installation
+command again, regenerate settings and fully restart your client.
 
-In apps that show MCP prompts, you can also select **Show me encrypted computing**
-(`aura_demo`). Connecting makes the tools available; your message starts the tour.
-The host controls tool approvals and how the guidance is displayed.
-Ask questions at any point, or say “one step at a time.” No copying long identifiers
-or loading keys is needed. The assistant uses the tools for you.
+## What you can run here today
 
-For a quick terminal connection check:
+- Add, subtract, multiply and divide encrypted integers and floats.
+- Compose sums, products, float averages and weighted sums on the coprocessor.
+- Discover available operations, measure request latency and save encrypted results.
+- Explore application access and distinguish published benchmarks from live observations.
 
-```sh
-aura-fhe-mcp --check
-```
+Numeric arithmetic is a core FHE use case. Binary-operation support is a planned
+capability milestone; it is not required for numeric computation to be homomorphic.
+An application uses these building blocks with its own input, key and output
+workflow. SQL, retrieval and model inference are not current MCP tools.
+[Tool reference](docs/PROTOCOL.md).
 
-The `preview` tag installs the current synthetic-data preview. To install this
-exact release, use `@aurafhe/mcp@0.5.0-rc.6` instead.
+## Try the optional learning lesson
 
-## Available today: encrypted numeric computation
+> Teach me encrypted computation using Aura's public sample lesson.
 
-- Integer and float addition, subtraction, multiplication and division.
-- Composed sums, products, float averages and weighted sums through the coprocessor.
-- Guided onboarding, roadmap and evidence status alongside the six computation tools.
-- Encrypted result files for separate recipient processing.
-- Per-computation client latency and ciphertext size; timing includes network and
-  service checks, not just engine execution.
+The assistant calls `aura_start` with `experience: "learn"`, explains FHE, prepares
+encrypted public samples, requests a calculation and saves the encrypted result.
+It handles identifiers for you. Ask questions or say “one step at a time.”
+The `aura_learn` MCP prompt starts this same lesson.
 
-Numeric arithmetic is a core use case for fully homomorphic encryption (FHE).
-Binary-operation support expands the available operations; it is not what makes
-numeric computation homomorphic. The synthetic live verifier reports expected and
-actual results, absolute error and tolerance. [Verification details](docs/VERIFICATION.md).
+The first example combines public totals 25 and 17. Expected sum: 42. The MCP
+returns encrypted data; the separate synthetic verifier checks actual numerical
+results outside the conversation. Follow-up samples 7.5, 2.5 and 2 support an
+encrypted average. [Observed checks and reproduction](docs/VERIFICATION.md).
 
-The fixed demo uses public sample numbers. MCP does not accept custom plaintext,
-secret keys or arbitrary file paths. The public package contains only the
-connection adapter; the computation implementation stays on the service.
+**Public-sample demo:** Aura manages its demo keys and can decrypt its demo data.
+Use public examples here. Confidential deployments need a verified key-custody
+and authorization design. Anything entered in your host assistant is visible to
+that assistant provider. [Security model](docs/SECURITY-MODEL.md).
 
-## Next release: binary operations
+## Build with Aura
 
-Binary-operation support is planned for the next release, expanding the
-computations available through the same MCP connection. The release will document
-the supported operations and their verification results when they become available.
+The package contains the connection adapter, not the proprietary computation
+engine. It accepts no custom plaintext, secret keys or arbitrary file paths in
+tool arguments. Operator-provisioned encrypted bundles require an authenticated
+compute-only deployment and separate recipient processing; this path is not
+Verified mode. The unpublished reference branch is a separate engineering fixture.
 
-## Beyond the primitives
-
-Aura confirms its **FHE database** and **FHE-AI LLM inference** applications are
-**completed, available on request via gen@afhe.io**. These applications are not
-exposed through the demo MCP; arrange a separate demonstration with Aura.
-FHE provides their computation foundation. Custom business workflows require
-their own integration and validation beyond this arithmetic interface.
-`aura_roadmap` distinguishes available primitives, compositions and planned work.
-
-## Modes and evidence
-
-| | Fixed demo | Operator bundle | Verified client/server workflow |
-| --- | --- | --- | --- |
-| Availability | `--demo` | Operator configuration | Not shipped in this release |
-| Inputs | Five public examples | Externally prepared ciphertext file | Intended owner-local encryption |
-| Computation | Demo backend | Authenticated worker with matching key declaration | Intended compute-only deployment |
-| Decryption | External verifier uses demo backend | Separate recipient integration | Intended recipient-local decryption |
-| Confidentiality claim | None | Not established by metadata | Requires evidence before release |
-
-Successful tool responses and handled operation errors identify their mode and
-carry `confidentialityClaimed: false`. Protocol validation errors may occur before
-a tool runs. `aura_proof` reports evidence status, not a cryptographic proof or
-certification. No mode is labeled Verified, and no unperformed check is marked pass.
-
-## Using the public preview
-
-**Public demo:** Use synthetic data. Confidential deployments require verified
-key isolation and access controls. [Deployment security](docs/SECURITY-MODEL.md).
-
-[Setup](docs/QUICKSTART.md) · [Tools](docs/PROTOCOL.md) ·
-[Verification](docs/VERIFICATION.md) · [Security](SECURITY.md)
+[Application walkthrough](docs/AI-DEMO.md) · [Investor demo](docs/INVESTOR-DEMO.md) ·
+[Architecture](docs/ARCHITECTURE.md) · [Verification](docs/VERIFICATION.md) ·
+[Security](SECURITY.md)

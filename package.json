@@ -1,7 +1,7 @@
 {
   "name": "@aurafhe/mcp",
-  "version": "0.5.0-rc.6",
-  "description": "MCP adapter for ciphertext arithmetic through Aura\u2019s coprocessor. Diagnostic preview.",
+  "version": "0.5.0-rc.7",
+  "description": "Connect assistants to Aura encrypted computation. Explore Aura AI and run public numeric demos.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {

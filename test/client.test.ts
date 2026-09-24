@@ -233,9 +233,9 @@ test('a beginner can follow prompt and returned next actions through a real MCP 
   try {
     assert.ok(client.getInstructions()?.includes('never heard of FHE'))
     assert.ok((await client.listPrompts()).prompts.some(p=>p.name==='aura_demo'))
-    const prompt=await client.getPrompt({name:'aura_demo',arguments:{}})
+    const prompt=await client.getPrompt({name:'aura_learn',arguments:{}})
     assert.match((prompt.messages[0].content as any).text,/new to FHE/)
-    let response=await call('aura_start')
+    let response=await call('aura_start',{experience:'learn'})
     assert.equal(response.guide.step,1);assert.equal(f.calls.length,0)
     assert.equal(response.guide.sample.expectedSumIsNotAnObservedResult,true)
     for(const step of [2,3,4]) {
@@ -253,11 +253,11 @@ test('a beginner can follow prompt and returned next actions through a real MCP 
 
 test('beginner guidance handles missing setup, unavailable addition and expired samples honestly',async()=>{
   const f=fixture(),empty=new FheSession(f.remote,{writeResult:async()=>{}})
-  assert.match((await empty.start()).guide.nextStep!,/--demo/)
+  assert.match((await empty.start(undefined,'learn')).guide.nextStep!,/--demo/)
   assert.equal((await f.session.inputs()).guide,undefined)
   const demo=new FheSession(f.remote,{demo:async()=>bundle,writeResult:async()=>{}})
   f.remote.functions=async()=>({arity1:[],arity2:[],arity3:[]})
-  assert.equal((await demo.start()).guide.nextAction,undefined)
+  assert.equal((await demo.start(undefined,'learn')).guide.nextAction,undefined)
   const handles=(await demo.inputs()).inputs.map(i=>i.handle)
   await demo.release(handles)
   assert.equal((await demo.inputs()).guide?.nextAction,undefined)
@@ -269,11 +269,66 @@ test('connection failures explain a next step without exposing backend diagnosti
   const server=createFheServer(f.session),client=new Client({name:'help',version:'1'})
   const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
   try{
-    const response=await client.callTool({name:'aura_start',arguments:{}})
+    const response=await client.callTool({name:'aura_start',arguments:{experience:'learn'}})
     assert.equal(response.isError,true)
     const text=(response.content as any)[0].text,body=JSON.parse(text)
     assert.ok(body.help.message&&body.help.nextStep)
     assert.ok(!text.includes('private-token-and-stack'))
     assert.equal(body.guide,undefined)
   }finally{await client.close();await server.close()}
+})
+
+test('application overview works offline and keeps website claims separate from session observations',async()=>{
+  const f=fixture();let networkCalls=0
+  f.remote.health=async()=>{networkCalls++;throw new Error('offline')}
+  f.remote.functions=async()=>{networkCalls++;throw new Error('offline')}
+  const server=createFheServer(f.session),client=new Client({name:'application-start',version:'1'})
+  const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
+  try {
+    const result=await client.callTool({name:'aura_start',arguments:{}})
+    assert.ok(!result.isError)
+    const overview=JSON.parse((result.content as any)[0].text)
+    assert.equal(networkCalls,0);assert.equal(f.calls.length,0)
+    assert.equal(overview.connection.status,'not-checked')
+    assert.equal(overview.backendReachable,undefined)
+    assert.equal(overview.smokeTest.status,'not-run')
+    const flagship=overview.applications.flagship
+    assert.equal(flagship.model,'GPT-OSS-20B')
+    assert.equal(flagship.benchmark.generationTokensPerSecond,'20+')
+    assert.equal(flagship.benchmark.liveMeasurement,false)
+    assert.equal(flagship.benchmark.independentlyVerifiedHere,false)
+    assert.equal(flagship.availableThroughThisMcp,false)
+    assert.equal(overview.guide.nextAction,undefined)
+    const lesson=overview.guide.choices.find((c:any)=>c.action)?.action
+    assert.deepEqual(lesson,{tool:'aura_start',arguments:{experience:'learn'}})
+    assert.deepEqual(flagship.benchmark,f.session.roadmap().applications.flagship.benchmark)
+    assert.deepEqual(flagship.benchmark,f.session.proof().aiBenchmark)
+    const response=await client.callTool({name:lesson.tool,arguments:lesson.arguments})
+    assert.equal(response.isError,true);assert.equal(networkCalls,1)
+  } finally {await client.close();await server.close()}
+})
+
+test('application guidance does not expose an inference tool or accept a private prompt',async()=>{
+  const f=fixture(),server=createFheServer(f.session),client=new Client({name:'application-boundary',version:'1'})
+  const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
+  try {
+    assert.ok(!(await client.listTools()).tools.some(t=>/chat|infer|generate/.test(t.name)))
+    for(const args of [{experience:'ai'},{prompt:'private text'},{experience:'learn',path:'/private'}]) {
+      assert.equal((await client.callTool({name:'aura_start',arguments:args})).isError,true)
+    }
+    assert.equal(f.calls.length,0)
+    const prompt=await client.getPrompt({name:'aura_demo',arguments:{}})
+    assert.match((prompt.messages[0].content as any).text,/Do not request private data or run a calculation until I choose it/)
+  } finally {await client.close();await server.close()}
+})
+
+test('follow-up recap refers to the chosen calculation without inventing the first sum',async()=>{
+  const f=fixture(),demo=new FheSession(f.remote,{demo:async()=>bundle,writeResult:async()=>{}})
+  const inputs=(await demo.inputs()).inputs
+  const product=await demo.compute('mul',[inputs[1].handle,inputs[1].handle])
+  const exported=await demo.exportResult(product.handle)
+  assert.ok(exported.guide)
+  assert.match(exported.guide.whyItMatters,/chosen calculation/)
+  assert.doesNotMatch(exported.guide.whyItMatters,/25|17|42/)
+  assert.match(exported.guide.whyItMatters,/has not decrypted or verified/)
 })

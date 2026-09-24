@@ -8,7 +8,7 @@ functions. Engine implementation remains private.
 
 | MCP tool | Arguments | Result |
 | --- | --- | --- |
-| `aura_start` | none | Mode, read-this-first notes, connectivity, operations and next steps |
+| `aura_start` | optional `experience`: `overview` (default) or `learn` | Application overview without network calls; `learn` checks the service and begins the numeric lesson |
 | `aura_roadmap` | none | Current primitives, compositions, planned work and application contact |
 | `aura_proof` | none | Evidence status; no cryptographic proof or certification |
 | `fhe_status` | none | Reachability, mode, configuration and release status |
@@ -23,10 +23,17 @@ Successful tool payloads and handled operation errors include `mode` as
 `confidentialityClaimed: false`, `confidentialityVerified: false` and
 `productionReady: false`. Framework-level schema errors can precede tool handling.
 `keyCustodyModel` is `backend-keyed` for Demo mode and `not-verified` otherwise.
-`aura_start` is a connectivity/onboarding call, not an arithmetic proof.
+`aura_start` defaults to an application overview without a network request. Its
+`connection.status` is `not-checked`, not a reachability claim. It returns the
+attributed GPT-OSS-20B website benchmark and routes to the separate application,
+the optional lesson or developer reference. `availableThroughThisMcp: false`
+identifies inference as a separate application. No inference call is made.
+`aura_start` with `experience: "learn"` checks connectivity and operations,
+but does not compute or verify an arithmetic result.
 `aura_proof` explicitly marks missing evidence rather than returning a pass.
-The `aura_demo` MCP prompt starts a beginner conversation; it does not itself run
-tools. `aura_start` returns `guide` with a plain-language introduction. In Demo
+The `aura_demo` MCP prompt starts the application overview; `aura_learn` starts
+the optional public-sample lesson. Prompts do not themselves run tools.
+`aura_start` returns `guide` with a plain-language introduction. In Demo
 mode, preparation, compute and export return steps 2–4 with explanations and
 `nextAction` arguments where appropriate. The agent keeps identifiers behind the
 scenes and narrates the real results. Missing operations or expired samples do
@@ -34,7 +41,10 @@ not produce a next action that claims they are usable. Handled failures return
 sanitized `help.message` and `help.nextStep`. Host approvals and rendering apply.
 `aura_roadmap` includes Aura's confirmation that its FHE database and FHE-AI LLM
 inference applications are completed and available on request via gen@afhe.io;
-`exposedThroughDemoMcp` is false for those separate applications.
+`exposedThroughDemoMcp` is false for those separate applications. It also returns
+the same application/benchmark record as onboarding. `aura_proof.aiBenchmark`
+labels that benchmark as reported evidence, not an independently verified or live
+measurement. [AI application and access status](AI-DEMO.md).
 
 `fhe_compute` also returns `metrics`: client elapsed milliseconds (worker checks,
 network and evaluation combined), output ciphertext bytes, number of remote
