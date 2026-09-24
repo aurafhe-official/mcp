@@ -1,7 +1,11 @@
 # AURA MCP
 
-Connect your AI agent to Aura's coprocessor for encrypted arithmetic.
-Computation runs remotely; your agent receives handles and encrypted result IDs.
+**Encrypted numeric computation for AI agents, through one MCP connection.**
+
+Connect Cursor, Claude Desktop, VS Code and other compatible MCP clients to
+Aura's coprocessor. Build numeric workflows with encrypted inputs, compose
+calculations and export encrypted results. Computation runs on Aura's service;
+the MCP tools work with handles instead of exposing raw values to the agent.
 
 ## Install and connect
 
@@ -40,21 +44,35 @@ aura-fhe-mcp --check
 The `preview` tag installs the current synthetic-data preview. To install this
 exact release, use `@aurafhe/mcp@0.5.0-rc.4` instead.
 
-## What works
+## Available today: encrypted numeric computation
 
 - Integer and float addition, subtraction, multiplication and division.
 - Composed sums, products and averages through the coprocessor.
 - Six MCP tools for status, operations, inputs, computation, export and release.
 - Encrypted result files for separate recipient processing.
 
+Numeric arithmetic is a core use case for fully homomorphic encryption (FHE).
+Binary-operation support expands the available operations; it is not what makes
+numeric computation homomorphic. This MCP release's numeric workflows have passed
+10 live end-to-end checks through Aura's coprocessor. [Verification details](docs/VERIFICATION.md).
+
 The fixed demo uses public sample numbers. MCP does not accept custom plaintext,
 secret keys or arbitrary file paths. The public package contains only the
 connection adapter; the computation implementation stays on the service.
 
-**Synthetic-data preview. The public demo service can decrypt its demo data;
-owner-only confidentiality is not verified and production use remains blocked.**
-Custom encrypted inputs require a provisioned authenticated compute-only service.
-This release provides numeric arithmetic, not arbitrary FHE applications.
+## Next release: binary operations
+
+Binary-operation support is planned for the next release, expanding the
+computations available through the same MCP connection. The release will document
+the supported operations and their verification results when they become available.
+
+## Using the public preview
+
+The public demo is for synthetic data and includes service-side decryption of its
+demo data. Custom encrypted inputs require a provisioned authenticated compute-only
+service. Owner-only confidentiality has not yet been verified, so this preview is
+not approved for confidential production data. Functional computation checks and
+production security assurance are separate; see the [security model](docs/SECURITY-MODEL.md).
 
 [Setup](docs/QUICKSTART.md) · [Tools](docs/PROTOCOL.md) ·
 [Verification](docs/VERIFICATION.md) · [Security](SECURITY.md)
