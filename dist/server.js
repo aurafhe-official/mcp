@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import { AuraError, Handle, MAX_INPUTS, Operation, VERSION } from './contracts.js';
-import { DEMO_PROMPT, HOST_GUIDANCE, errorHelp } from './guide.js';
+import { DEMO_PROMPT, LEARN_PROMPT, HOST_GUIDANCE, errorHelp } from './guide.js';
 export function createFheServer(session) {
     async function safe(fn) {
         try {
@@ -15,9 +15,10 @@ export function createFheServer(session) {
     const server = new McpServer({ name: 'aura', version: VERSION, title: 'AURA encrypted compute' }, {
         instructions: HOST_GUIDANCE + ' Use aura_roadmap for available operations and planned capabilities, aura_proof for evidence boundaries. Operator-bundle mode is not Verified mode. Functional arithmetic and latency measurements do not establish confidentiality or production readiness.',
     });
-    server.registerPrompt('aura_demo', { title: 'Show me encrypted computing', description: 'A guided first demo for someone who has never used FHE.', argsSchema: z.strictObject({}) }, () => ({ messages: [{ role: 'user', content: { type: 'text', text: DEMO_PROMPT } }] }));
-    server.registerTool('aura_start', { title: 'Start here: your first Aura demo', description: 'Begin a plain-language tour: explain FHE, introduce public example numbers and return the next action. Check connection and operations. No key setup is needed for Demo mode. Does not compute or decrypt.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.start(ctx.mcpReq.signal)));
-    server.registerTool('aura_roadmap', { description: 'Describe available numeric primitives, application compositions, planned binary support and the production client/server pattern. Contact Aura for separate application demonstrations.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async () => safe(async () => session.roadmap()));
+    server.registerPrompt('aura_demo', { title: 'What can I do with Aura?', description: 'Start with Aura AI, its published benchmark and the available MCP tools; offer the optional learning lesson.', argsSchema: z.strictObject({}) }, () => ({ messages: [{ role: 'user', content: { type: 'text', text: DEMO_PROMPT } }] }));
+    server.registerPrompt('aura_learn', { title: 'Learn encrypted computation', description: 'Optional four-step lesson using fixed public samples and the live coprocessor.', argsSchema: z.strictObject({}) }, () => ({ messages: [{ role: 'user', content: { type: 'text', text: LEARN_PROMPT } }] }));
+    server.registerTool('aura_start', { title: 'Start here: what can Aura do?', description: 'Default overview explains Aura AI, the website benchmark and the numeric tools available here without contacting a backend. Choose experience learn to check the coprocessor and begin the optional sample lesson. Does not run inference, compute or decrypt.', inputSchema: z.strictObject({ experience: z.enum(['overview', 'learn']).optional() }), annotations: { readOnlyHint: true } }, async ({ experience }, ctx) => safe(() => session.start(ctx.mcpReq.signal, experience)));
+    server.registerTool('aura_roadmap', { description: 'Show Aura AI application access and its attributed website benchmark, then available numeric tools and planned integrations. AI inference is a separate application, not an executable tool here.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async () => safe(async () => session.roadmap()));
     server.registerTool('aura_proof', { description: 'Report which security evidence is absent or inapplicable. This is an evidence-status report, not a cryptographic proof, journal or key-custody certification.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async () => safe(async () => session.proof()));
     server.registerTool('fhe_status', { description: 'Check service reachability, input configuration and release status. Health does not prove key readiness or confidentiality.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.status(ctx.mcpReq.signal)));
     server.registerTool('fhe_ops', { description: 'List supported numeric operations advertised by the connected coprocessor.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.ops(ctx.mcpReq.signal)));

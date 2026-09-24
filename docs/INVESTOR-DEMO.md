@@ -1,70 +1,65 @@
 # Investor walkthrough
 
-## Position the layers
+Lead with a useful AI task. FHE is the computation foundation, Aura AI is an
+application, and MCP connects assistants to the capabilities exposed here.
+The numeric lesson is an optional explanation and integration check.
 
-FHE is the encrypted-computation foundation. Aura's coprocessor evaluates
-ciphertexts; MCP supplies the agent connection, constrained tools and result
-handles. Applications compose those operations into business workflows.
+## 1. Establish the application and evidence
 
-This walkthrough demonstrates the shipped public interface. It is not a
-confidentiality certification, a database demo or an inference benchmark.
+Use the website's **GPT-OSS-20B, 20+ tokens/second, one RTX PRO 6000 Blackwell GPU**
+benchmark. Prompt read-in is reported below 2.3 seconds. Attribute these figures
+to Aura's internal benchmark; do not present them as a live MCP measurement or
+independently reproduced result. [Published source](https://afhe.io/#status).
 
-Investor demos use Aura's **backend-keyed Demo mode** until the production
-compute-only endpoint is deployed and validated. A Microsoft SEAL reference
-coprocessor is a separate integration fixture and must never be presented as
-Aura's computation engine or used to substantiate Aura engine benchmarks.
+The [AI walkthrough](AI-DEMO.md) includes access status, a fictional company memo
+and follow-up task. First confirm the application opens over valid HTTPS. If it
+does not, use an arranged demonstration; do not present a canned answer as a live run.
+Record the actual model and observed response metrics if available.
 
-## Run the public demonstration
+Explain which data is encrypted, where keys reside, which inference steps are
+protected and where the answer becomes readable. Do not infer AI key custody or
+performance from the numeric demo. No proprietary implementation needs to be
+published to provide a clear boundary and reproducible benchmark conditions.
 
-Start as a newcomer: “Show me the Aura demo. I am new to FHE; explain each step
-as we go.” The assistant explains the idea, prepares public encrypted samples,
-requests the calculation and saves the encrypted result. Let the audience ask
-questions; they do not need to choose tools, copy references or load keys.
-The optional MCP prompt **Show me encrypted computing** starts the same tour.
+## 2. Show where the current MCP fits
 
-The following tool sequence is a technical reference for the presenter. These
-names should not be prerequisites for the audience:
+Connect with [Quickstart](QUICKSTART.md) and ask:
 
-1. Install the preview and configure the host with `--demo` using [Quickstart](QUICKSTART.md).
-2. Ask for `aura_start`. Show the mode, live operation list and read-this-first notes.
-3. Ask for `fhe_inputs`. Inputs 0 and 1 are public integers 25 and 17.
-4. Ask for `fhe_compute` with `add` and those handles. Show the encrypted handle,
-   measured client latency and ciphertext size. Do not call that engine-only time.
-5. Export with `fhe_export`. MCP returns a result ID, not plaintext.
-6. Show `aura_proof`: demo key custody is inapplicable; server zero-decryption and
-   cryptographic review are not verified. Nothing untested is a pass.
-7. Show `aura_roadmap`: primitives, compositions, planned binary operations,
-   production separation and Aura's confirmed completed applications, available
-   on request via gen@afhe.io and not exposed through this demo MCP.
+> What can I do with Aura? Show me the AI application first, then explain what I can run here.
 
-## Show actual numerical correctness
+The overview offers an application walkthrough, the optional public-sample lesson
+and a developer reference. It also works offline. It does not call model inference.
+The current tools perform numeric operations; a future inference tool requires
+the actual service contract and appropriate input/key/output integration.
 
-From a source checkout, run `npm ci --ignore-scripts`, then `npm run test:live`.
-The verifier starts the actual MCP, computes, exports, and separately decrypts
-only its own synthetic results through the demo backend. Wrong answers fail.
-The report includes expected/actual values, absolute error, tolerance, request
-latency and ciphertext size. Cases include a float mean, an integer chain and a
-weighted sum. Those sample checks do not cover every input or circuit depth.
+Aura confirms its FHE database and FHE-AI LLM inference applications are completed
+and available on request via **gen@afhe.io**, separately from the demo MCP.
 
-Expected 25 + 17 is 42, but an encrypted handle alone does not prove the answer.
-Use the verifier's actual output rather than presenting an expected number as an
-observed decrypted result. There is no MCP reveal tool or local-keygen command.
+## 3. Optional: teach the encrypted-computation foundation
 
-## Technical due diligence: a separate milestone
+Ask for the public-sample learning lesson. The agent prepares encrypted examples,
+requests a remote calculation and saves an encrypted result. Explain each step;
+keep tool names, JSON and identifiers out of the audience's way.
 
-Before presenting a Verified-mode demonstration, assess the actual local key
-generation/encryption/decryption build, deployed compute-only contract,
-principal/key isolation, tampering, revocation/rotation and independently reviewed
-security assumptions. Inspect actual traffic and server implementation; a worker's
-JSON declaration is insufficient.
+Demo mode is **backend-keyed**: Aura manages its public example keys. The expected
+25 + 17 answer is 42, but an encrypted handle is not a numerical verification.
+From a source checkout, run `npm ci --ignore-scripts` and `npm run test:live` for
+the separate verifier. It starts the MCP and checks only fixed synthetic results
+through the demo backend. Show its actual output, error and tolerance. Request
+timing includes network and worker checks, not only engine execution.
 
-Wrong-key failure or a ciphertext-only request log alone does not prove
-confidentiality. A 50-step circuit, comparison/max, browser WASM, and complete
-database/inference applications are outside this walkthrough's verified coverage.
-Arrange a separate demonstration with Aura at gen@afhe.io.
+Do not use a Microsoft SEAL reference fixture as Aura's engine or as evidence of
+Aura performance. The separate unpublished reference branch is engineering work.
 
-## Publication boundary
+## Technical follow-up
 
-The public adapter and its tests are open. Private cryptographic implementations,
-parameters and deployment evidence remain private unless separately authorized
-for release. Proposed future open-source work is not an already completed release.
+Before an owner-key demonstration, validate the deployed client/server contract,
+encryption and decryption locations, authentication, cross-owner isolation,
+revocation and the security assumptions. Neither health declarations nor a
+ciphertext-only request log proves that a server cannot recover data.
+
+For AI benchmarking, document the exact checkpoint, model configuration, hardware,
+prompt/output lengths, concurrency, timing definitions and encrypted execution
+coverage. Keep website figures separate from measurements made during the session.
+Publish only authorized descriptions and evidence; keep proprietary engine code,
+private keys and deployment details private.

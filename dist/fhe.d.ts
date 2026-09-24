@@ -26,6 +26,34 @@ export declare class FheSession {
         productionReady: boolean;
     };
     roadmap(): {
+        applications: {
+            purpose: string;
+            flagship: {
+                name: string;
+                model: string;
+                parameters: string;
+                benchmark: {
+                    generationTokensPerSecond: string;
+                    hardware: string;
+                    promptReadIn: string;
+                    classification: string;
+                    source: string;
+                    sourceCheckedOn: string;
+                    liveMeasurement: boolean;
+                    independentlyVerifiedHere: boolean;
+                };
+                availableThroughThisMcp: boolean;
+                access: {
+                    walkthrough: string;
+                    browserApplication: string;
+                    availability: string;
+                    fallback: string;
+                    connectionAdvice: string;
+                };
+            };
+            availableHere: string[];
+            privacy: string;
+        };
         foundation: string;
         availableThroughMcp: string[];
         compositions: string[];
@@ -55,6 +83,16 @@ export declare class FheSession {
     };
     proof(): {
         scope: string;
+        aiBenchmark: {
+            generationTokensPerSecond: string;
+            hardware: string;
+            promptReadIn: string;
+            classification: string;
+            source: string;
+            sourceCheckedOn: string;
+            liveMeasurement: boolean;
+            independentlyVerifiedHere: boolean;
+        };
         keyCustody: {
             status: string;
             explanation: string;
@@ -74,7 +112,75 @@ export declare class FheSession {
             explanation: string;
         };
     };
-    start(signal?: AbortSignal): Promise<{
+    start(signal?: AbortSignal, experience?: 'overview' | 'learn'): Promise<{
+        guide: {
+            title: string;
+            message: string;
+            whyItMatters: string;
+            choices: ({
+                label: string;
+                url: string;
+                description: string;
+                action?: undefined;
+            } | {
+                label: string;
+                action: {
+                    tool: string;
+                    arguments: {
+                        experience: string;
+                    };
+                };
+                description: string;
+                url?: undefined;
+            })[];
+            nextStep: string;
+            needsPrivateData: boolean;
+        };
+        applications: {
+            purpose: string;
+            flagship: {
+                name: string;
+                model: string;
+                parameters: string;
+                benchmark: {
+                    generationTokensPerSecond: string;
+                    hardware: string;
+                    promptReadIn: string;
+                    classification: string;
+                    source: string;
+                    sourceCheckedOn: string;
+                    liveMeasurement: boolean;
+                    independentlyVerifiedHere: boolean;
+                };
+                availableThroughThisMcp: boolean;
+                access: {
+                    walkthrough: string;
+                    browserApplication: string;
+                    availability: string;
+                    fallback: string;
+                    connectionAdvice: string;
+                };
+            };
+            availableHere: string[];
+            privacy: string;
+        };
+        connection: {
+            status: string;
+            nextAction: {
+                tool: string;
+                arguments: {};
+            };
+        };
+        smokeTest: {
+            status: string;
+            explanation: string;
+        };
+        mode: string;
+        keyCustodyModel: string;
+        confidentialityClaimed: boolean;
+        confidentialityVerified: boolean;
+        productionReady: boolean;
+    } | {
         guide: {
             title: string;
             message: string;

@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { AuraError, Ciphertext, FUNCTIONS, InputBundle, MAX_BUNDLE, MAX_INPUTS, Operation, type Domain, type ResultBundle } from './contracts.js'
 import type { Coprocessor } from './coprocessor.js'
-import { welcomeGuide, preparedGuide, computedGuide, savedGuide } from './guide.js'
+import { applicationStory, overviewGuide, welcomeGuide, preparedGuide, computedGuide, savedGuide } from './guide.js'
 
 type Stored = { domain: Domain; ciphertext: string; expiresAt: number; operation?: Operation }
 type Options = { bundle?: InputBundle; demo?: (signal?: AbortSignal) => Promise<InputBundle>; writeResult: (value: ResultBundle) => Promise<void>; now?: () => number }
@@ -24,7 +24,7 @@ export class FheSession {
       confidentialityClaimed: false, confidentialityVerified: false, productionReady: false }
   }
   roadmap() {
-    return { foundation: 'FHE is the encrypted-computation layer; MCP connects agents to that layer. Applications compose its operations.',
+    return { applications: applicationStory(), foundation: 'FHE is the encrypted-computation layer; MCP connects agents to that layer. Applications compose its operations.',
       availableThroughMcp: ['int/float add', 'int/float sub', 'int/float mul', 'int/float div'],
       compositions: ['sum', 'product', 'float mean using an encrypted count', 'weighted sum using encrypted weights'],
       nextRelease: { status: 'planned', capability: 'binary operations' },
@@ -40,6 +40,7 @@ export class FheSession {
   }
   proof() {
     return { scope: 'Evidence boundaries, not a cryptographic proof or live security audit.',
+      aiBenchmark: applicationStory().flagship.benchmark,
       keyCustody: { status: this.options.demo ? 'not-applicable-to-demo' : 'not-verified',
         explanation: this.options.demo ? 'Demo encryption and decryption are backend services.' : 'Worker metadata is a declaration, not proof of secret-key absence.' },
       serverZeroDecryption: { status: 'not-verified' },
@@ -48,7 +49,10 @@ export class FheSession {
       correctness: { status: 'run-separate-verifier', command: 'npm run test:live',
         explanation: 'The source-checkout verifier decrypts only fixed synthetic results outside MCP and reports numerical error.' } }
   }
-  async start(signal?: AbortSignal) {
+  async start(signal?: AbortSignal, experience: 'overview' | 'learn' = 'overview') {
+    if (experience === 'overview') return { ...this.context(), guide: overviewGuide(), applications: applicationStory(),
+      connection: { status: 'not-checked', nextAction: { tool: 'fhe_status', arguments: {} } },
+      smokeTest: { status: 'not-run', explanation: 'This application overview does not call the backend or measure model performance.' } }
     const status = await this.status(signal)
     const operations = await this.ops(signal)
     return { ...status, ...operations,

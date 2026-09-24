@@ -7,7 +7,7 @@ import { configuredCoprocessor } from './coprocessor.js';
 import { readBundle, resultWriter } from './artifacts.js';
 import { FheSession } from './fhe.js';
 import { createFheServer } from './server.js';
-const help = `AURA MCP ${VERSION} â€” diagnostic preview (synthetic data only)
+const help = `AURA MCP ${VERSION} — encrypted computation preview (synthetic data only)
   aura-fhe-mcp                    Start the MCP tool connection
   aura-fhe-mcp --demo             Enable fixed public example inputs
   aura-fhe-mcp --check            Check HTTPS and available operations
@@ -17,6 +17,9 @@ const help = `AURA MCP ${VERSION} â€” diagnostic preview (synthetic data on
 
 Node.js 20+ is required. Generated settings use this installed MCP directly.
 The demo uses 25, 17, 7.5, 2.5 and 2. No keys or engine installation needed.
+After connecting, ask: What can I do with Aura?
+Explore Aura AI and its website benchmark, or choose the optional sample lesson.
+Model inference is a separate application; this MCP exposes numeric tools.
 Optional AURA_COPROCESSOR_URL and AURA_ACCESS_TOKEN configure the remote service.
 AURA_INPUT_BUNDLE selects an encrypted input file, outside model context.
 Bundle mode requires AURA_ACCESS_TOKEN and a compute-only worker with matching key ID.
