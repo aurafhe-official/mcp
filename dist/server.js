@@ -1,18 +1,21 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import { AuraError, Handle, MAX_INPUTS, Operation, VERSION } from './contracts.js';
-async function safe(fn) {
-    try {
-        return { content: [{ type: 'text', text: JSON.stringify(await fn()) }] };
-    }
-    catch (e) {
-        return { isError: true, content: [{ type: 'text', text: JSON.stringify({ error: e instanceof AuraError ? e.code : 'COPROCESSOR_REQUEST_FAILED' }) }] };
-    }
-}
 export function createFheServer(session) {
+    async function safe(fn) {
+        try {
+            return { content: [{ type: 'text', text: JSON.stringify({ ...await fn(), ...session.context() }) }] };
+        }
+        catch (e) {
+            return { isError: true, content: [{ type: 'text', text: JSON.stringify({ ...session.context(), error: e instanceof AuraError ? e.code : 'COPROCESSOR_REQUEST_FAILED' }) }] };
+        }
+    }
     const server = new McpServer({ name: 'aura', version: VERSION, title: 'AURA encrypted compute' }, {
-        instructions: 'Diagnostic preview for synthetic data. Computation runs at Aura’s coprocessor. First check fhe_status, fhe_ops and fhe_inputs. Compute using handles and export the encrypted result for separate recipient processing. Never request plaintext, credentials, keys or file paths in chat. Fixed demo inputs are public examples. Functional arithmetic does not establish confidentiality or production readiness.',
+        instructions: 'FHE is the encrypted-computation base layer; MCP connects agents to Aura’s coprocessor. Start with aura_start. Use aura_roadmap for available operations and planned capabilities, aura_proof for evidence boundaries. Compute using handles and export encrypted results for separate recipient processing. Never request plaintext, credentials, keys or file paths in chat. Fixed demo inputs are public examples. Operator-bundle mode is not Verified mode. Functional arithmetic and latency measurements do not establish confidentiality or production readiness.',
     });
+    server.registerTool('aura_start', { description: 'Read this first: explain the current mode and FHE base layer, check connectivity and list usable operations. Does not run or claim a verified smoke test.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.start(ctx.mcpReq.signal)));
+    server.registerTool('aura_roadmap', { description: 'Describe available numeric primitives, application compositions, planned binary support and the production client/server pattern. Contact Aura for separate application demonstrations.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async () => safe(async () => session.roadmap()));
+    server.registerTool('aura_proof', { description: 'Report which security evidence is absent or inapplicable. This is an evidence-status report, not a cryptographic proof, journal or key-custody certification.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async () => safe(async () => session.proof()));
     server.registerTool('fhe_status', { description: 'Check service reachability, input configuration and release status. Health does not prove key readiness or confidentiality.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.status(ctx.mcpReq.signal)));
     server.registerTool('fhe_ops', { description: 'List supported numeric operations advertised by the connected coprocessor.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.ops(ctx.mcpReq.signal)));
     server.registerTool('fhe_inputs', { description: 'Get handles for the operator-provisioned encrypted inputs, or fixed public examples in demo mode. Accepts no source values or paths.', inputSchema: z.strictObject({}) }, async (_, ctx) => safe(() => session.inputs(ctx.mcpReq.signal)));

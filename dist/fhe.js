@@ -18,6 +18,49 @@ export class FheSession {
         if (options.bundle && options.demo)
             throw new AuraError('DEMO_AND_BUNDLE_CONFLICT');
     }
+    context() {
+        return { mode: this.options.demo ? 'fixed-synthetic-demo' : this.options.bundle ? 'operator-bundle' : 'unconfigured',
+            keyCustodyModel: this.options.demo ? 'backend-keyed' : 'not-verified',
+            confidentialityClaimed: false, confidentialityVerified: false, productionReady: false };
+    }
+    roadmap() {
+        return { foundation: 'FHE is the encrypted-computation layer; MCP connects agents to that layer. Applications compose its operations.',
+            availableThroughMcp: ['int/float add', 'int/float sub', 'int/float mul', 'int/float div'],
+            compositions: ['sum', 'product', 'float mean using an encrypted count', 'weighted sum using encrypted weights'],
+            nextRelease: { status: 'planned', capability: 'binary operations' },
+            requiresSeparateIntegration: ['encrypted database', 'encrypted model inference', 'custom application circuits'],
+            completedApplications: { applications: ['FHE database', 'FHE-AI LLM inference'], status: 'completed',
+                availability: 'available on request via gen@afhe.io', source: 'Aura team confirmation', exposedThroughDemoMcp: false },
+            productionPattern: 'Owner-side keys and encryption -> authenticated ciphertext computation -> authorized recipient-side decryption.',
+            verifiedMode: { status: 'not available in this release', evidenceRequired: ['client encryption/decryption integration', 'server key-custody and authorization validation', 'independent cryptographic review'] },
+            openSource: { available: ['MCP adapter', 'adapter tests', 'synthetic live verifier'],
+                notIncluded: ['client cryptographic implementation', 'coprocessor implementation', 'cryptographic proof suite'],
+                furtherDisclosures: 'Scope and dates will be announced separately by Aura.' },
+            contact: 'gen@afhe.io' };
+    }
+    proof() {
+        return { scope: 'Evidence boundaries, not a cryptographic proof or live security audit.',
+            keyCustody: { status: this.options.demo ? 'not-applicable-to-demo' : 'not-verified',
+                explanation: this.options.demo ? 'Demo encryption and decryption are backend services.' : 'Worker metadata is a declaration, not proof of secret-key absence.' },
+            serverZeroDecryption: { status: 'not-verified' },
+            independentCryptographicReview: { status: 'not-verified' },
+            networkJournal: { status: 'not-implemented' },
+            correctness: { status: 'run-separate-verifier', command: 'npm run test:live',
+                explanation: 'The source-checkout verifier decrypts only fixed synthetic results outside MCP and reports numerical error.' } };
+    }
+    async start(signal) {
+        const status = await this.status(signal);
+        const operations = await this.ops(signal);
+        return { ...status, ...operations,
+            readThisFirst: { purpose: 'Demonstrate ciphertext computation through Aura MCP. FHE is the base layer; applications are built from its operations.',
+                demo: 'Backend-keyed Demo mode with fixed public examples; backend encryption/decryption. Demonstrates functionality, not confidentiality against Aura.',
+                production: 'Owner-side encryption and recipient-side decryption with an authenticated compute-only service. Verified mode is not shipped here.',
+                openSource: 'This repository publishes the adapter and its tests; additional cryptographic components are not included.' },
+            nextSteps: this.options.demo ? ['Call fhe_inputs for fixed public inputs.', 'Call fhe_compute with add and integer input handles 0 and 1.', 'Call fhe_export for the computed handle. Verify its expected value of 42 outside MCP.', 'Call aura_proof for evidence boundaries or aura_roadmap for application pathways.']
+                : this.options.bundle ? ['Call fhe_inputs to obtain operator-provisioned handles.', 'Computation checks the worker declaration and key ID before dispatch.', 'Export results for separate recipient processing; this is not Verified mode.']
+                    : ['Reconnect with --demo for the public walkthrough, or have your operator provision encrypted inputs.'],
+            smokeTest: { status: 'not-run', explanation: 'This onboarding call checks connectivity and capabilities; it does not decrypt or assert arithmetic correctness.' } };
+    }
     async exclusive(fn) {
         if (this.busy)
             throw new AuraError('BUSY');
@@ -54,7 +97,7 @@ export class FheSession {
     async status(signal) {
         return this.exclusive(async () => {
             await this.remote.health(signal);
-            return { backendReachable: true, execution: 'aura-coprocessor', mode: this.options.demo ? 'fixed-synthetic-demo' : 'ciphertext-only',
+            return { ...this.context(), backendReachable: true, execution: 'aura-coprocessor',
                 inputsConfigured: Boolean(this.options.bundle || this.options.demo), productionReady: false, confidentialityVerified: false };
         });
     }
@@ -87,6 +130,7 @@ export class FheSession {
     }
     async compute(op, handles, signal) {
         return this.exclusive(async () => {
+            const started = performance.now();
             Operation.parse(op);
             if (handles.length < 2 || handles.length > MAX_INPUTS || ((op === 'sub' || op === 'div') && handles.length !== 2))
                 throw new AuraError('INVALID_OPERATION');
@@ -111,7 +155,11 @@ export class FheSession {
             const expiresAt = Math.min(...refs.map(ref => ref.expiresAt));
             if (expiresAt <= this.now())
                 throw new AuraError('UNKNOWN_OR_EXPIRED_HANDLE');
-            return this.remember({ domain, ciphertext, operation: op, expiresAt });
+            return { ...this.remember({ domain, ciphertext, operation: op, expiresAt }),
+                metrics: { clientElapsedMs: Math.round((performance.now() - started) * 100) / 100,
+                    ciphertextBytes: Buffer.byteLength(ciphertext), remoteComputeCalls: refs.length - 1,
+                    timingScope: 'Includes worker checks, network and remote evaluation; not engine-only time.',
+                    precisionClass: domain === 'float' ? 'approximate' : 'backend-integer-semantics', accuracyVerified: false } };
         });
     }
     async exportResult(handle) {

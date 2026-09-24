@@ -8,12 +8,32 @@ functions. Engine implementation remains private.
 
 | MCP tool | Arguments | Result |
 | --- | --- | --- |
+| `aura_start` | none | Mode, read-this-first notes, connectivity, operations and next steps |
+| `aura_roadmap` | none | Current primitives, compositions, planned work and application contact |
+| `aura_proof` | none | Evidence status; no cryptographic proof or certification |
 | `fhe_status` | none | Reachability, mode, configuration and release status |
 | `fhe_ops` | none | Supported operations intersected with service discovery |
 | `fhe_inputs` | none | Local handles, indexes, domains and expiry |
 | `fhe_compute` | `op`, `handles` | Result handle, domain and expiry |
 | `fhe_export` | `handle` | Encrypted result ID and domain |
 | `fhe_release` | `handles` | Number of forgotten handles |
+
+Successful tool payloads and handled operation errors include `mode` as
+`fixed-synthetic-demo`, `operator-bundle` or `unconfigured`, with
+`confidentialityClaimed: false`, `confidentialityVerified: false` and
+`productionReady: false`. Framework-level schema errors can precede tool handling.
+`keyCustodyModel` is `backend-keyed` for Demo mode and `not-verified` otherwise.
+`aura_start` is a connectivity/onboarding call, not an arithmetic proof.
+`aura_proof` explicitly marks missing evidence rather than returning a pass.
+`aura_roadmap` includes Aura's confirmation that its FHE database and FHE-AI LLM
+inference applications are completed and available on request via gen@afhe.io;
+`exposedThroughDemoMcp` is false for those separate applications.
+
+`fhe_compute` also returns `metrics`: client elapsed milliseconds (worker checks,
+network and evaluation combined), output ciphertext bytes, number of remote
+binary calls, and an integer/approximate precision class. It does not measure
+engine-only time or decrypt to check error; `accuracyVerified` is false.
+The separate live verifier reports actual numerical error for synthetic cases.
 
 Domains: `int`, `float`. Operations: `add`, `sub`, `mul`, `div`.
 Addition/multiplication accept 2–128 handles; subtraction/division require two.
@@ -65,4 +85,6 @@ its own demo artifacts outside MCP. The confidentiality release gate remains
 blocked in both modes.
 
 The previous draft-only `aura-coprocessor/1` session gateway is not required or
-asserted to be deployed. This version uses the existing REST API.
+asserted to be deployed. This version uses the existing REST API. A Verified-mode
+client, public-key session provisioning, WASM client and traffic journal are not
+shipped. `/health` metadata cannot establish their existence or security.
