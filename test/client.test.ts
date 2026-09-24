@@ -176,6 +176,7 @@ test('onboarding and evidence never promote worker declarations into Verified mo
   const start=await f.session.start()
   assert.equal(start.mode,'operator-bundle')
   assert.equal(start.confidentialityClaimed,false)
+  assert.equal(start.keyCustodyModel,'not-verified')
   assert.equal(start.confidentialityVerified,false)
   assert.equal(start.smokeTest.status,'not-run')
   assert.equal(f.calls.length,0)
@@ -185,6 +186,7 @@ test('onboarding and evidence never promote worker declarations into Verified mo
   assert.equal(f.session.roadmap().nextRelease.status,'planned')
   const demo=new FheSession(f.remote,{demo:async()=>bundle,writeResult:async()=>{}})
   assert.equal(demo.context().mode,'fixed-synthetic-demo')
+  assert.equal(demo.context().keyCustodyModel,'backend-keyed')
   assert.equal(demo.proof().keyCustody.status,'not-applicable-to-demo')
   const empty=new FheSession(f.remote,{writeResult:async()=>{}})
   assert.equal(empty.context().mode,'unconfigured')
@@ -198,6 +200,7 @@ test('tool payloads retain mode and no confidentiality claim on success and oper
       const r=await client.callTool({name,arguments:{}})
       const body=JSON.parse((r.content as any)[0].text)
       assert.equal(body.mode,'operator-bundle');assert.equal(body.confidentialityClaimed,false)
+      assert.equal(body.keyCustodyModel,'not-verified')
       assert.ok(!JSON.stringify(body).includes('cipher-a'))
     }
     const r=await client.callTool({name:'fhe_compute',arguments:{op:'add',handles:['ct_'+'0'.repeat(32),'ct_'+'1'.repeat(32)]}})

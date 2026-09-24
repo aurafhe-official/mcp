@@ -22,8 +22,12 @@ Successful tool payloads and handled operation errors include `mode` as
 `fixed-synthetic-demo`, `operator-bundle` or `unconfigured`, with
 `confidentialityClaimed: false`, `confidentialityVerified: false` and
 `productionReady: false`. Framework-level schema errors can precede tool handling.
+`keyCustodyModel` is `backend-keyed` for Demo mode and `not-verified` otherwise.
 `aura_start` is a connectivity/onboarding call, not an arithmetic proof.
 `aura_proof` explicitly marks missing evidence rather than returning a pass.
+`aura_roadmap` includes Aura's confirmation that its FHE database and FHE-AI LLM
+inference applications are completed and available on request via gen@afhe.io;
+`exposedThroughDemoMcp` is false for those separate applications.
 
 `fhe_compute` also returns `metrics`: client elapsed milliseconds (worker checks,
 network and evaluation combined), output ciphertext bytes, number of remote

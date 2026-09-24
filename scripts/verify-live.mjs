@@ -25,6 +25,7 @@ async function tool(name, args = {}) {
   assert.ok(!result.isError, `${name} failed`)
   const payload = JSON.parse(result.content[0].text)
   assert.equal(payload.mode, 'fixed-synthetic-demo')
+  assert.equal(payload.keyCustodyModel, 'backend-keyed')
   assert.equal(payload.confidentialityClaimed, false)
   return payload
 }

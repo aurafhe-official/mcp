@@ -9,6 +9,11 @@ handles. Applications compose those operations into business workflows.
 This walkthrough demonstrates the shipped public interface. It is not a
 confidentiality certification, a database demo or an inference benchmark.
 
+Investor demos use Aura's **backend-keyed Demo mode** until the production
+compute-only endpoint is deployed and validated. A Microsoft SEAL reference
+coprocessor is a separate integration fixture and must never be presented as
+Aura's computation engine or used to substantiate Aura engine benchmarks.
+
 ## Run the public demonstration
 
 1. Install the preview and configure the host with `--demo` using [Quickstart](QUICKSTART.md).
@@ -20,7 +25,8 @@ confidentiality certification, a database demo or an inference benchmark.
 6. Show `aura_proof`: demo key custody is inapplicable; server zero-decryption and
    cryptographic review are not verified. Nothing untested is a pass.
 7. Show `aura_roadmap`: primitives, compositions, planned binary operations,
-   production separation and the contact for application discussions.
+   production separation and Aura's confirmed completed applications, available
+   on request via gen@afhe.io and not exposed through this demo MCP.
 
 ## Show actual numerical correctness
 

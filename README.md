@@ -20,7 +20,8 @@ synthetic verifier measures correctness, error and request latency.
 the owner generates keys and encrypts in its own environment, the server computes
 on ciphertext, and an authorized recipient decrypts locally. This release provides
 a demo and an operator-bundle integration path, not a verified client-key workflow.
-The demonstration backend manages demo keys and can decrypt its demo data.
+Demo mode is **backend-keyed**: the demonstration backend manages demo keys and
+can decrypt its demo data.
 
 **What is open today.** The MCP adapter, adapter tests and synthetic live verifier
 are public. Client cryptography, the coprocessor implementation and a cryptographic
@@ -93,10 +94,11 @@ the supported operations and their verification results when they become availab
 
 ## Beyond the primitives
 
-FHE provides the foundation for application workflows such as encrypted databases,
-model inference and custom business computations. Each needs its own integration
-and validation beyond this arithmetic interface. Contact **gen@afhe.io** to discuss
-application demonstrations, technical due diligence or custom use cases.
+Aura confirms its **FHE database** and **FHE-AI LLM inference** applications are
+**completed, available on request via gen@afhe.io**. These applications are not
+exposed through the demo MCP; arrange a separate demonstration with Aura.
+FHE provides their computation foundation. Custom business workflows require
+their own integration and validation beyond this arithmetic interface.
 `aura_roadmap` distinguishes available primitives, compositions and planned work.
 
 ## Modes and evidence

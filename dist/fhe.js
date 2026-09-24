@@ -20,6 +20,7 @@ export class FheSession {
     }
     context() {
         return { mode: this.options.demo ? 'fixed-synthetic-demo' : this.options.bundle ? 'operator-bundle' : 'unconfigured',
+            keyCustodyModel: this.options.demo ? 'backend-keyed' : 'not-verified',
             confidentialityClaimed: false, confidentialityVerified: false, productionReady: false };
     }
     roadmap() {
@@ -28,6 +29,8 @@ export class FheSession {
             compositions: ['sum', 'product', 'float mean using an encrypted count', 'weighted sum using encrypted weights'],
             nextRelease: { status: 'planned', capability: 'binary operations' },
             requiresSeparateIntegration: ['encrypted database', 'encrypted model inference', 'custom application circuits'],
+            completedApplications: { applications: ['FHE database', 'FHE-AI LLM inference'], status: 'completed',
+                availability: 'available on request via gen@afhe.io', source: 'Aura team confirmation', exposedThroughDemoMcp: false },
             productionPattern: 'Owner-side keys and encryption -> authenticated ciphertext computation -> authorized recipient-side decryption.',
             verifiedMode: { status: 'not available in this release', evidenceRequired: ['client encryption/decryption integration', 'server key-custody and authorization validation', 'independent cryptographic review'] },
             openSource: { available: ['MCP adapter', 'adapter tests', 'synthetic live verifier'],
@@ -50,7 +53,7 @@ export class FheSession {
         const operations = await this.ops(signal);
         return { ...status, ...operations,
             readThisFirst: { purpose: 'Demonstrate ciphertext computation through Aura MCP. FHE is the base layer; applications are built from its operations.',
-                demo: 'Fixed public examples; backend encryption/decryption. Demonstrates functionality, not confidentiality against Aura.',
+                demo: 'Backend-keyed Demo mode with fixed public examples; backend encryption/decryption. Demonstrates functionality, not confidentiality against Aura.',
                 production: 'Owner-side encryption and recipient-side decryption with an authenticated compute-only service. Verified mode is not shipped here.',
                 openSource: 'This repository publishes the adapter and its tests; additional cryptographic components are not included.' },
             nextSteps: this.options.demo ? ['Call fhe_inputs for fixed public inputs.', 'Call fhe_compute with add and integer input handles 0 and 1.', 'Call fhe_export for the computed handle. Verify its expected value of 42 outside MCP.', 'Call aura_proof for evidence boundaries or aura_roadmap for application pathways.']

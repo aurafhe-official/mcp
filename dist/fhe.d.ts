@@ -20,6 +20,7 @@ export declare class FheSession {
     constructor(remote: Coprocessor, options: Options);
     context(): {
         mode: string;
+        keyCustodyModel: string;
         confidentialityClaimed: boolean;
         confidentialityVerified: boolean;
         productionReady: boolean;
@@ -33,6 +34,13 @@ export declare class FheSession {
             capability: string;
         };
         requiresSeparateIntegration: string[];
+        completedApplications: {
+            applications: string[];
+            status: string;
+            availability: string;
+            source: string;
+            exposedThroughDemoMcp: boolean;
+        };
         productionPattern: string;
         verifiedMode: {
             status: string;
@@ -90,6 +98,7 @@ export declare class FheSession {
         productionReady: boolean;
         confidentialityVerified: boolean;
         mode: string;
+        keyCustodyModel: string;
         confidentialityClaimed: boolean;
     }>;
     private exclusive;
@@ -103,6 +112,7 @@ export declare class FheSession {
         productionReady: boolean;
         confidentialityVerified: boolean;
         mode: string;
+        keyCustodyModel: string;
         confidentialityClaimed: boolean;
     }>;
     private capabilities;
