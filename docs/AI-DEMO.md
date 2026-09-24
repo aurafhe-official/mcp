@@ -22,12 +22,12 @@ Keep the model identity and timing scope attached to the benchmark.
 
 ## Access the application
 
-[aura.afhe.io](https://aura.afhe.io) is the intended trial entry for the separate
-AI experience, not an MCP server URL. **Access check, 24 September 2026:** this
-address did not resolve, and the existing chat address failed its HTTPS hostname
-check. Trial routing and certificate configuration must be completed before a
-visitor can rely on this entry. We could not run the AI application or measure its
-performance. If access fails, arrange a demonstration via **gen@afhe.io**.
+[chat.afhe.io](https://chat.afhe.io) is Aura's chat application address, separate
+from the MCP connection. **Access check, 24 September 2026:** the service failed
+its HTTPS certificate hostname check. The hosting configuration needs correction
+before this connection can be verified. We could not run the AI application or
+measure its performance. If access fails, arrange a demonstration via **gen@afhe.io**;
+do not bypass a browser certificate warning.
 
 The numeric MCP connection uses a different service and can still be tried.
 This package does not submit prompts to Aura Chat or return model-generated text.

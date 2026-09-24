@@ -6,13 +6,19 @@ connects an assistant to the operations an application or service exposes.
 
 | Experience | What a visitor does | What it demonstrates |
 | --- | --- | --- |
-| **Aura AI** | Enter through [aura.afhe.io](https://aura.afhe.io), try an invented business question, then ask a follow-up | The separate AI application and its observed response; see [access and demonstration guidance](AI-DEMO.md) |
+| **Aura AI** | Enter through [chat.afhe.io](https://chat.afhe.io), try an invented business question, then ask a follow-up | The separate AI application and its observed response; see [access and demonstration guidance](AI-DEMO.md) |
 | **Applications on Aura** | Request an evaluation of encrypted databases, messaging or private inference via **gen@afhe.io** | A specific application, with its own supported operations, client and key-custody design |
-| **Aura MCP** | Connect an assistant, inspect supported tools and try the public numeric lesson | The integration and numeric workflow shipped in this package |
+| **Aura MCP** | Learn FHE step by step, connect supported computations and plan an application integration | The numeric workflow, key-custody distinctions and integration requirements shipped in this package |
 
 These are different interfaces. Installing MCP does not install a language model,
 encrypt an existing assistant conversation, or enable database queries. The AI
 application is separate from the current MCP tools.
+
+MCP is also an educational and development entry point. Use the
+[learning and integration guide](BUILD-WITH-AURA.md) to progress from encrypted
+numbers to application design. Simpler setup is a development direction;
+client-side encryption, key storage, service authentication and browser WASM
+integration still require work for a complete confidential application.
 
 ## Why encryption keys matter
 

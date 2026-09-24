@@ -34,6 +34,18 @@ export declare class FheSession {
                 entry: string;
                 runsThroughThisMcp: boolean;
             }[];
+            mcpPurpose: {
+                learn: string;
+                integrate: string;
+                explore: string;
+                buildingGuide: string;
+                setup: {
+                    publicDemo: string;
+                    privateApplication: string;
+                    oneClickPrivateIntegration: boolean;
+                    wasm: string;
+                };
+            };
             ownerControlledDesign: {
                 status: string;
                 client: string;
@@ -74,6 +86,18 @@ export declare class FheSession {
             privacy: string;
         };
         foundation: string;
+        integration: {
+            learn: string;
+            integrate: string;
+            explore: string;
+            buildingGuide: string;
+            setup: {
+                publicDemo: string;
+                privateApplication: string;
+                oneClickPrivateIntegration: boolean;
+                wasm: string;
+            };
+        };
         availableThroughMcp: string[];
         compositions: string[];
         nextRelease: {
@@ -171,6 +195,18 @@ export declare class FheSession {
                 entry: string;
                 runsThroughThisMcp: boolean;
             }[];
+            mcpPurpose: {
+                learn: string;
+                integrate: string;
+                explore: string;
+                buildingGuide: string;
+                setup: {
+                    publicDemo: string;
+                    privateApplication: string;
+                    oneClickPrivateIntegration: boolean;
+                    wasm: string;
+                };
+            };
             ownerControlledDesign: {
                 status: string;
                 client: string;
@@ -249,6 +285,7 @@ export declare class FheSession {
                 expectedSumIsNotAnObservedResult: boolean;
             };
             modeNote: string;
+            keyLesson: string;
             steps: string[];
             nextStep?: undefined;
             needsPrivateData?: undefined;
@@ -266,6 +303,7 @@ export declare class FheSession {
                 expectedSumIsNotAnObservedResult: boolean;
             };
             modeNote: string;
+            keyLesson: string;
             steps: string[];
             needsPrivateData?: undefined;
         };

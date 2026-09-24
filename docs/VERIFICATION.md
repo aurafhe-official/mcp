@@ -43,7 +43,7 @@ Offline tests confirm the overview does not make a network call, invent a live
 AI measurement or expose an inference tool. Explicit learning requests still
 surface connection failures. Follow-up exports use a calculation-neutral recap.
 Package verification installs rc.7, exercises its generated configuration and
-checks 28 approved files, including the application walkthrough.
+checks 29 approved files, including the application walkthrough.
 Computation output
 includes client elapsed time and ciphertext size; the verifier reports actual
 absolute error. These are sample measurements, not an engine-only benchmark.

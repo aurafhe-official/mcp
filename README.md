@@ -14,13 +14,20 @@ internal benchmark, not a speed measured by this MCP or an independent validatio
 
 | Three ways to experience Aura | Where to go |
 | --- | --- |
-| **1. Try Aura AI** with a business question and a follow-up | [aura.afhe.io](https://aura.afhe.io) · [Demo guide and access status](docs/AI-DEMO.md) |
+| **1. Try Aura AI** with a business question and a follow-up | [chat.afhe.io](https://chat.afhe.io) · [Demo guide and access status](docs/AI-DEMO.md) |
 | **2. Evaluate applications**: encrypted databases, messaging or private inference | [Arrange an evaluation](mailto:gen@afhe.io) |
-| **3. Connect through MCP** from Cursor, Claude Desktop or VS Code | [Install and connect](#install-and-connect) · [Optional numeric lesson](#try-the-optional-learning-lesson) |
+| **3. Learn and build through MCP** from Cursor, Claude Desktop or VS Code | [Install and connect](#install-and-connect) · [Application integration guide](docs/BUILD-WITH-AURA.md) |
 
 [Understand the differences, keys and evidence](docs/EXPERIENCES.md). Start with
 the AI application for the product experience; use MCP to explore the supported
 numeric integration. If trial access is unavailable, arrange a demo via **gen@afhe.io**.
+
+MCP helps users **learn how FHE works, integrate supported encrypted calculations
+into applications, and explore their potential**. Start with a guided public
+lesson, then map your own use case to its computation, keys and result workflow.
+The public demo needs installation and host configuration. Confidential application
+integration also needs local encryption, key custody and authenticated service
+setup; browser WASM integration is planned. [From learning to building](docs/BUILD-WITH-AURA.md).
 
 The AI application is accessed separately; **this package does not run model
 inference**. Its executable tools provide encrypted numeric computation. Aura's
@@ -97,6 +104,10 @@ and authorization design. Anything entered in your host assistant is visible to
 that assistant provider. [Security model](docs/SECURITY-MODEL.md).
 
 ## Build with Aura
+
+Describe your application to the assistant using public or invented information.
+It can help map your task to available operations and explain the client/server
+configuration you need. [Integration steps and the path to simpler setup](docs/BUILD-WITH-AURA.md).
 
 The package contains the connection adapter, not the proprietary computation
 engine. It accepts no custom plaintext, secret keys or arbitrary file paths in
