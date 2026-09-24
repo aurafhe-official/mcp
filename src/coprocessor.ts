@@ -1,30 +1,31 @@
-import { randomUUID } from 'node:crypto'
 import * as z from 'zod/v4'
-import { AuraError, KeyRef, MAX_RESPONSE, PROTOCOL } from './contracts.js'
+import { AuraError, Ciphertext, DEFAULT_ENDPOINT, FUNCTIONS, FunctionList, MAX_RESPONSE } from './contracts.js'
 
-export type Action = 'session.open' | 'session.status' | 'dataset.import' | 'compute' | 'result.export' | 'objects.release'
+export const Health = z.object({ status: z.literal('ok'), role: z.string().optional(),
+  secretKeyLoaded: z.boolean().optional(), keyId: z.string().min(1).max(128).optional() })
 export interface Coprocessor {
-  request(action: Action, payload: object, signal?: AbortSignal): Promise<unknown>
+  health(signal?: AbortSignal): Promise<z.infer<typeof Health>>
+  functions(signal?: AbortSignal): Promise<z.infer<typeof FunctionList>>
+  call(fn: string, ciphertexts: string[], signal?: AbortSignal): Promise<string>
 }
-export type Options = { endpoint: string; token: string; timeoutMs?: number; fetch?: typeof fetch }
+export type Options = { endpoint?: string; token?: string; timeoutMs?: number; fetch?: typeof fetch }
 
-/** Public transport only. No engine bindings, key files, encryption or native dispatch. */
+/** Verified HTTPS transport; no backend diagnostics are returned to the model. */
 export class HttpsCoprocessor implements Coprocessor {
   private endpoint: URL
   private fetchImpl: typeof fetch
   private timeoutMs: number
-  constructor(private options: Options) {
-    this.endpoint = new URL(options.endpoint)
-    if (this.endpoint.protocol !== 'https:' || this.endpoint.username || this.endpoint.password || this.endpoint.search || this.endpoint.hash) throw new AuraError('INVALID_HTTPS_ENDPOINT')
-    if (!/^[\x21-\x7e]{16,4096}$/.test(options.token)) throw new AuraError('INVALID_SERVICE_CREDENTIAL')
+  constructor(private options: Options = {}) {
+    this.endpoint = new URL(options.endpoint ?? DEFAULT_ENDPOINT)
+    if (this.endpoint.protocol !== 'https:' || this.endpoint.username || this.endpoint.password || this.endpoint.search || this.endpoint.hash || this.endpoint.pathname !== '/') throw new AuraError('INVALID_HTTPS_ENDPOINT')
+    if (options.token !== undefined && !/^[\x21-\x7e]{16,4096}$/.test(options.token)) throw new AuraError('INVALID_SERVICE_CREDENTIAL')
     this.timeoutMs = options.timeoutMs ?? 30_000
     if (!Number.isInteger(this.timeoutMs) || this.timeoutMs < 1000 || this.timeoutMs > 120_000) throw new AuraError('INVALID_TIMEOUT')
     if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') throw new AuraError('TLS_VERIFICATION_REQUIRED')
     this.fetchImpl = options.fetch ?? globalThis.fetch.bind(globalThis)
   }
-  async request(action: Action, payload: object, signal?: AbortSignal): Promise<unknown> {
+  private async request(path: string, body?: object, signal?: AbortSignal): Promise<unknown> {
     if (signal?.aborted) throw new AuraError('CANCELLED')
-    const requestId = randomUUID()
     const controller = new AbortController()
     let timedOut = false
     const cancel = () => controller.abort()
@@ -32,9 +33,10 @@ export class HttpsCoprocessor implements Coprocessor {
     const timer = setTimeout(() => { timedOut = true; controller.abort() }, this.timeoutMs)
     let response: Response | undefined
     try {
-      response = await this.fetchImpl(this.endpoint, { method: 'POST', redirect: 'error', signal: controller.signal,
-        headers: { 'authorization': `Bearer ${this.options.token}`, 'content-type': 'application/json', 'accept': 'application/json' },
-        body: JSON.stringify({ protocol: PROTOCOL, requestId, action, payload }) })
+      response = await this.fetchImpl(new URL(path, this.endpoint), { method: body ? 'POST' : 'GET', redirect: 'error', signal: controller.signal,
+        headers: { ...(this.options.token ? { authorization: `Bearer ${this.options.token}` } : {}),
+          ...(body ? { 'content-type': 'application/json' } : {}), accept: 'application/json' },
+        body: body ? JSON.stringify(body) : undefined })
       if (response.status === 401 || response.status === 403) throw new AuraError('COPROCESSOR_ACCESS_DENIED')
       if (response.status === 429) throw new AuraError('COPROCESSOR_RATE_LIMIT')
       if (!response.ok) throw new AuraError('COPROCESSOR_UNAVAILABLE')
@@ -52,10 +54,8 @@ export class HttpsCoprocessor implements Coprocessor {
           chunks.push(value)
         }
       } finally { await reader.cancel().catch(() => {}); reader.releaseLock() }
-      const envelope = z.strictObject({ protocol: z.literal(PROTOCOL), requestId: z.literal(requestId), result: z.unknown() })
-        .parse(JSON.parse(Buffer.concat(chunks).toString('utf8')))
       if (controller.signal.aborted) throw new AuraError(signal?.aborted ? 'CANCELLED' : 'COPROCESSOR_TIMEOUT')
-      return envelope.result
+      return JSON.parse(Buffer.concat(chunks).toString('utf8'))
     } catch (e) {
       if (signal?.aborted) throw new AuraError('CANCELLED')
       if (timedOut) throw new AuraError('COPROCESSOR_TIMEOUT')
@@ -68,13 +68,26 @@ export class HttpsCoprocessor implements Coprocessor {
       signal?.removeEventListener('abort', cancel)
     }
   }
+  async health(signal?: AbortSignal) { return Health.parse(await this.request('/health', undefined, signal)) }
+  async functions(signal?: AbortSignal) { return FunctionList.parse(await this.request('/functions', undefined, signal)) }
+  async call(fn: string, ciphertexts: string[], signal?: AbortSignal) {
+    const allowed: string[] = Object.values(FUNCTIONS).flatMap(value => Object.values(value))
+    if (!allowed.includes(fn) || ciphertexts.length !== 2) throw new AuraError('INVALID_OPERATION')
+    ciphertexts.forEach(value => Ciphertext.parse(value))
+    return z.strictObject({ result: Ciphertext }).parse(await this.request('/call', { fn, args: ciphertexts }, signal)).result
+  }
+  /** Fixed public numbers only; no caller-supplied plaintext enters this method. */
+  async demoBundle(signal?: AbortSignal) {
+    const inputs = []
+    for (const [domain, value] of [['int','25'], ['int','17'], ['float','7.5'], ['float','2.5'], ['float','2']] as const) {
+      const result = z.strictObject({ ciphertext: Ciphertext }).parse(await this.request(`/encrypt/${domain}`, { value, public: true }, signal))
+      inputs.push({ domain, ciphertext: result.ciphertext })
+    }
+    return { version: 1 as const, keyId: 'public-synthetic-demo', inputs }
+  }
 }
 
-export function configuredCoprocessor() {
-  if (process.env.AURA_NATIVE_LIBRARY || process.env.AURA_WORKSPACE || process.env.AFHE_API_URL || process.env.AFHE_INSECURE_TLS) throw new AuraError('LEGACY_CONFIGURATION_UNSUPPORTED')
-  const endpoint = process.env.AURA_COPROCESSOR_URL
-  const token = process.env.AURA_ACCESS_TOKEN
-  if (!endpoint || !token) throw new AuraError('COPROCESSOR_CONFIGURATION_REQUIRED')
-  const key = KeyRef.parse({ id: process.env.AURA_KEY_ID, version: Number(process.env.AURA_KEY_VERSION) })
-  return { coprocessor: new HttpsCoprocessor({ endpoint, token }), key }
+export function configuredCoprocessor(env: NodeJS.ProcessEnv = process.env) {
+  if (env.AURA_NATIVE_LIBRARY || env.AURA_WORKSPACE || env.AFHE_INSECURE_TLS || env.AFHE_API_URL || env.AFHE_INPUT_BUNDLE || env.AURA_KEY_ID || env.AURA_KEY_VERSION) throw new AuraError('LEGACY_CONFIGURATION_UNSUPPORTED')
+  return new HttpsCoprocessor({ endpoint: env.AURA_COPROCESSOR_URL, token: env.AURA_ACCESS_TOKEN })
 }

@@ -10,5 +10,8 @@ deployment details, private test evidence or server diagnostics. Add only public
 tool/transport contracts and synthetic contract tests. All evaluation is performed
 by the private service; do not add a local fallback or a bypass for TLS/auth checks.
 
-Live backend changes and end-to-end FHE verification belong in the private service
-workflow. Coordinate the public contract with that service before deployment.
+The explicit `npm run test:live` check uses only fixed public examples against
+the existing API. It must not read owner files, change service key configuration,
+publish ciphertext or include native-engine details. Backend changes and private
+cryptographic assessment belong in the private service workflow. Preserve the
+confidentiality release gate until those prerequisites have been cleared.

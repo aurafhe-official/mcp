@@ -1,7 +1,7 @@
 {
   "name": "@aurafhe/mcp",
-  "version": "0.5.0-rc.2",
-  "description": "Minimal MCP client for authenticated encrypted computation through Aura\u2019s coprocessor.",
+  "version": "0.5.0-rc.3",
+  "description": "MCP adapter for ciphertext arithmetic through Aura\u2019s coprocessor. Diagnostic preview.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -15,7 +15,8 @@
     "examples",
     "README.md",
     "SECURITY.md",
-    "LICENSE"
+    "LICENSE",
+    "release-status.json"
   ],
   "engines": {
     "node": ">=20.0.0"
@@ -25,7 +26,9 @@
     "prepublishOnly": "npm run build",
     "test": "npm run build && node scripts/test.mjs",
     "test:package": "node scripts/verify-package.mjs",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "check": "node dist/index.js --check",
+    "test:live": "npm run build && node scripts/verify-live.mjs"
   },
   "keywords": [
     "mcp-server",

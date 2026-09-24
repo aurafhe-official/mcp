@@ -1,5 +1,6 @@
-# Client configuration
+# Connect to Aura
 
-Follow [Setup](../../docs/QUICKSTART.md). Configure service credentials through
-the host’s protected environment, never in committed examples or model context.
-The private gateway integration must be ready before these examples can run.
+Use the --config option with cursor, claude or vscode to generate settings for
+your platform. Add --demo to use fixed public data. Static JSON examples show
+macOS/Linux commands; the generator emits the Windows command wrapper as needed.
+See the repository Quickstart for complete setup and release limitations.

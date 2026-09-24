@@ -1,53 +1,64 @@
-import { KeyRef, type Operation } from './contracts.js';
+import { InputBundle, Operation, type ResultBundle } from './contracts.js';
 import type { Coprocessor } from './coprocessor.js';
-/** Local handles conceal remote object references. All computation is remote. */
+type Options = {
+    bundle?: InputBundle;
+    demo?: (signal?: AbortSignal) => Promise<InputBundle>;
+    writeResult: (value: ResultBundle) => Promise<void>;
+    now?: () => number;
+};
+/** Session-local handles; ciphertext arithmetic always runs at the coprocessor. */
 export declare class FheSession {
     private remote;
-    private key;
-    private now;
-    private session?;
+    private options;
     private handles;
+    private inputHandles;
+    private keyId?;
+    private loaded;
     private busy;
     private calls;
-    constructor(remote: Coprocessor, key: KeyRef, now?: () => number);
+    private now;
+    constructor(remote: Coprocessor, options: Options);
     private exclusive;
-    private ensure;
     private purge;
-    private scope;
-    private validateRefs;
     private remember;
     private lookup;
     status(signal?: AbortSignal): Promise<{
-        ready: boolean;
+        backendReachable: boolean;
         execution: string;
-        expiresAt: number;
+        mode: string;
+        inputsConfigured: boolean;
+        productionReady: boolean;
+        confidentialityVerified: boolean;
     }>;
+    private capabilities;
     ops(signal?: AbortSignal): Promise<{
         ops: {
-            op: "add" | "sub" | "mul" | "mean" | "concat";
-            domain: "string" | "int" | "float";
+            op: string;
+            domain: string;
             minInputs: number;
             maxInputs: number;
         }[];
     }>;
-    importDataset(datasetId: string, signal?: AbortSignal): Promise<{
-        handles: {
+    inputs(signal?: AbortSignal): Promise<{
+        inputs: {
             handle: string;
-            domain: "string" | "int" | "float";
+            index: number;
+            domain: "int" | "float";
             expiresAt: number;
         }[];
     }>;
     compute(op: Operation, handles: string[], signal?: AbortSignal): Promise<{
         handle: string;
-        domain: "string" | "int" | "float";
+        domain: "int" | "float";
         expiresAt: number;
     }>;
-    exportResult(handle: string, signal?: AbortSignal): Promise<{
+    exportResult(handle: string): Promise<{
         resultId: string;
-        domain: "string" | "int" | "float";
-        expiresAt: number;
+        domain: "int" | "float";
+        encrypted: boolean;
     }>;
-    release(handles: string[], signal?: AbortSignal): Promise<{
+    release(handles: string[]): Promise<{
         released: number;
     }>;
 }
+export {};

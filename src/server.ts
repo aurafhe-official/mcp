@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/server'
 import * as z from 'zod/v4'
-import { AuraError, Handle, MAX_INPUTS, OpaqueId, Operation, VERSION } from './contracts.js'
+import { AuraError, Handle, MAX_INPUTS, Operation, VERSION } from './contracts.js'
 import { FheSession } from './fhe.js'
 
 async function safe(fn: () => Promise<unknown>) {
@@ -9,19 +9,19 @@ async function safe(fn: () => Promise<unknown>) {
 }
 export function createFheServer(session: FheSession) {
   const server = new McpServer({ name: 'aura', version: VERSION, title: 'AURA encrypted compute' }, {
-    instructions: 'All computation runs through Aura’s authenticated coprocessor. Use only owner-provided encrypted dataset IDs. Never request source values, credentials or keys in chat. Import references, compute, then export the encrypted result for the authorized recipient. This MCP has no plaintext input, encryption, decryption, raw engine dispatch or local computation tools.',
+    instructions: 'Diagnostic preview for synthetic data. Computation runs at Aura’s coprocessor. First check fhe_status, fhe_ops and fhe_inputs. Compute using handles and export the encrypted result for separate recipient processing. Never request plaintext, credentials, keys or file paths in chat. Fixed demo inputs are public examples. Functional arithmetic does not establish confidentiality or production readiness.',
   })
-  server.registerTool('fhe_status', { description: 'Check the configured coprocessor session readiness.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } },
+  server.registerTool('fhe_status', { description: 'Check service reachability, input configuration and release status. Health does not prove key readiness or confidentiality.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } },
     async (_, ctx) => safe(() => session.status(ctx.mcpReq.signal)))
-  server.registerTool('fhe_ops', { description: 'List public operations enabled for this authenticated session.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } },
+  server.registerTool('fhe_ops', { description: 'List supported numeric operations advertised by the connected coprocessor.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } },
     async (_, ctx) => safe(() => session.ops(ctx.mcpReq.signal)))
-  server.registerTool('fhe_import', { description: 'Open a dataset already encrypted and provisioned through the owner application. Returns local handles.', inputSchema: z.strictObject({ datasetId: OpaqueId }) },
-    async ({ datasetId }, ctx) => safe(() => session.importDataset(datasetId, ctx.mcpReq.signal)))
-  server.registerTool('fhe_compute', { description: 'Ask Aura’s coprocessor to evaluate an enabled operation on encrypted handles. Returns a handle without revealing plaintext.', inputSchema: z.strictObject({ op: Operation, handles: z.array(Handle).min(1).max(MAX_INPUTS) }) },
+  server.registerTool('fhe_inputs', { description: 'Get handles for the operator-provisioned encrypted inputs, or fixed public examples in demo mode. Accepts no source values or paths.', inputSchema: z.strictObject({}) },
+    async (_, ctx) => safe(() => session.inputs(ctx.mcpReq.signal)))
+  server.registerTool('fhe_compute', { description: 'Evaluate numeric ciphertext handles at Aura’s coprocessor. Division uses exactly two handles; a zero divisor cannot be checked locally. Returns an encrypted-result handle.', inputSchema: z.strictObject({ op: Operation, handles: z.array(Handle).min(2).max(MAX_INPUTS) }) },
     async ({ op, handles }, ctx) => safe(() => session.compute(op, handles, ctx.mcpReq.signal)))
-  server.registerTool('fhe_export', { description: 'Request an encrypted result for the authorized recipient. Returns a result reference; no download URL or plaintext.', inputSchema: z.strictObject({ handle: Handle }) },
-    async ({ handle }, ctx) => safe(() => session.exportResult(handle, ctx.mcpReq.signal)))
-  server.registerTool('fhe_release', { description: 'Release this session’s selected encrypted references.', inputSchema: z.strictObject({ handles: z.array(Handle).min(1).max(MAX_INPUTS) }) },
-    async ({ handles }, ctx) => safe(() => session.release(handles, ctx.mcpReq.signal)))
+  server.registerTool('fhe_export', { description: 'Save a computed ciphertext to the operator-configured output directory. Returns only its result ID. Decryption is outside MCP.', inputSchema: z.strictObject({ handle: Handle }) },
+    async ({ handle }) => safe(() => session.exportResult(handle)))
+  server.registerTool('fhe_release', { description: 'Forget selected handles in this process. Previously exported files are retained for the recipient.', inputSchema: z.strictObject({ handles: z.array(Handle).min(1).max(MAX_INPUTS) }) },
+    async ({ handles }) => safe(() => session.release(handles)))
   return server
 }

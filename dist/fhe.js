@@ -1,19 +1,22 @@
-import { randomUUID } from 'node:crypto';
-import * as z from 'zod/v4';
-import { AuraError, Computed, Exported, Imported, KeyRef, MAX_INPUTS, OpaqueId, SessionInfo, sameKey, supported } from './contracts.js';
-/** Local handles conceal remote object references. All computation is remote. */
+import { randomBytes } from 'node:crypto';
+import { AuraError, Ciphertext, FUNCTIONS, InputBundle, MAX_BUNDLE, MAX_INPUTS, Operation } from './contracts.js';
+/** Session-local handles; ciphertext arithmetic always runs at the coprocessor. */
 export class FheSession {
     remote;
-    key;
-    now;
-    session;
+    options;
     handles = new Map();
+    inputHandles = [];
+    keyId;
+    loaded = false;
     busy = false;
     calls = [];
-    constructor(remote, key, now = () => Date.now()) {
+    now;
+    constructor(remote, options) {
         this.remote = remote;
-        this.key = key;
-        this.now = now;
+        this.options = options;
+        this.now = options.now ?? Date.now;
+        if (options.bundle && options.demo)
+            throw new AuraError('DEMO_AND_BUNDLE_CONFLICT');
     }
     async exclusive(fn) {
         if (this.busy)
@@ -24,46 +27,23 @@ export class FheSession {
         this.calls.push(this.now());
         this.busy = true;
         try {
+            this.purge();
             return await fn();
         }
         finally {
             this.busy = false;
         }
     }
-    async ensure(signal) {
-        if (this.session && this.session.expiresAt <= this.now()) {
-            this.handles.clear();
-            throw new AuraError('SESSION_EXPIRED_RECONNECT');
-        }
-        if (!this.session) {
-            const session = SessionInfo.parse(await this.remote.request('session.open', { key: this.key }, signal));
-            if (!sameKey(session.key, this.key) || session.expiresAt <= this.now() || session.expiresAt > this.now() + 24 * 60 * 60_000 || session.capabilities.some(c => !supported(c)))
-                throw new AuraError('INVALID_COPROCESSOR_SESSION');
-            if (new Set(session.capabilities.map(c => `${c.domain}/${c.op}`)).size !== session.capabilities.length)
-                throw new AuraError('INVALID_COPROCESSOR_SESSION');
-            this.session = session;
-        }
-        this.purge();
-        return { sessionId: this.session.sessionId, key: this.key };
-    }
     purge() { for (const [h, ref] of this.handles)
         if (ref.expiresAt <= this.now())
             this.handles.delete(h); }
-    scope(value) {
-        if (value.sessionId !== this.session?.sessionId || !sameKey(value.key, this.key))
-            throw new AuraError('COPROCESSOR_SCOPE_MISMATCH');
-    }
-    validateRefs(refs) {
-        if (refs.some(r => r.expiresAt <= this.now() || r.expiresAt > this.session.expiresAt))
-            throw new AuraError('INVALID_OBJECT_EXPIRY');
-        if (this.handles.size + refs.length > 2048)
-            throw new AuraError('HANDLE_LIMIT');
-    }
     remember(ref) {
-        const handle = `ct_${randomUUID()}`;
-        const expiresAt = Math.min(ref.expiresAt, this.now() + 30 * 60_000);
-        this.handles.set(handle, { ...ref, expiresAt });
-        return { handle, domain: ref.domain, expiresAt };
+        Ciphertext.parse(ref.ciphertext);
+        if (this.handles.size >= 512 || [...this.handles.values()].reduce((n, r) => n + Buffer.byteLength(r.ciphertext), 0) + Buffer.byteLength(ref.ciphertext) > 32 * 1024 * 1024)
+            throw new AuraError('HANDLE_LIMIT');
+        const handle = `ct_${randomBytes(16).toString('hex')}`;
+        this.handles.set(handle, ref);
+        return { handle, domain: ref.domain, expiresAt: ref.expiresAt };
     }
     lookup(handle) {
         const ref = this.handles.get(handle);
@@ -73,79 +53,85 @@ export class FheSession {
     }
     async status(signal) {
         return this.exclusive(async () => {
-            const scope = await this.ensure(signal);
-            const status = z.strictObject({ sessionId: OpaqueId, key: KeyRef, ready: z.boolean() })
-                .parse(await this.remote.request('session.status', scope, signal));
-            this.scope(status);
-            return { ready: status.ready, execution: 'aura-coprocessor', expiresAt: this.session.expiresAt };
+            await this.remote.health(signal);
+            return { backendReachable: true, execution: 'aura-coprocessor', mode: this.options.demo ? 'fixed-synthetic-demo' : 'ciphertext-only',
+                inputsConfigured: Boolean(this.options.bundle || this.options.demo), productionReady: false, confidentialityVerified: false };
         });
     }
-    async ops(signal) {
-        return this.exclusive(async () => { await this.ensure(signal); return { ops: this.session.capabilities }; });
+    async capabilities(signal) {
+        const advertised = new Set((await this.remote.functions(signal)).arity2);
+        return Object.entries(FUNCTIONS).flatMap(([op, domains]) => Object.entries(domains)
+            .filter(([, fn]) => advertised.has(fn)).map(([domain]) => ({ op, domain, minInputs: 2, maxInputs: op === 'sub' || op === 'div' ? 2 : MAX_INPUTS })));
     }
-    async importDataset(datasetId, signal) {
-        OpaqueId.parse(datasetId);
+    async ops(signal) { return this.exclusive(async () => ({ ops: await this.capabilities(signal) })); }
+    async inputs(signal) {
         return this.exclusive(async () => {
-            const scope = await this.ensure(signal);
-            const imported = Imported.parse(await this.remote.request('dataset.import', { ...scope, datasetId }, signal));
-            this.scope(imported);
-            this.validateRefs(imported.objects);
-            if (signal?.aborted)
-                throw new AuraError('CANCELLED');
-            return { handles: imported.objects.map(ref => this.remember(ref)) };
+            if (!this.loaded) {
+                const source = this.options.bundle ?? await this.options.demo?.(signal);
+                if (!source)
+                    throw new AuraError('INPUT_BUNDLE_REQUIRED_OR_USE_DEMO');
+                const bundle = InputBundle.parse(source);
+                if (Buffer.byteLength(JSON.stringify(bundle)) > MAX_BUNDLE)
+                    throw new AuraError('INPUT_BUNDLE_LIMIT');
+                if (signal?.aborted)
+                    throw new AuraError('CANCELLED');
+                this.keyId = bundle.keyId;
+                this.inputHandles = bundle.inputs.map(ref => this.remember({ ...ref, expiresAt: this.now() + 30 * 60_000 }).handle);
+                this.loaded = true;
+            }
+            return { inputs: this.inputHandles.flatMap((handle, index) => {
+                    const ref = this.handles.get(handle);
+                    return ref ? [{ handle, index, domain: ref.domain, expiresAt: ref.expiresAt }] : [];
+                }) };
         });
     }
     async compute(op, handles, signal) {
         return this.exclusive(async () => {
-            const scope = await this.ensure(signal);
-            if (!handles.length || handles.length > MAX_INPUTS)
+            Operation.parse(op);
+            if (handles.length < 2 || handles.length > MAX_INPUTS || ((op === 'sub' || op === 'div') && handles.length !== 2))
                 throw new AuraError('INVALID_OPERATION');
-            const refs = handles.map(h => this.lookup(h));
-            const domain = refs[0].domain;
+            const refs = handles.map(h => this.lookup(h)), domain = refs[0].domain;
             if (refs.some(r => r.domain !== domain))
                 throw new AuraError('DOMAIN_MISMATCH');
-            const cap = this.session.capabilities.find(c => c.domain === domain && c.op === op);
-            if (!cap || handles.length < cap.minInputs || handles.length > cap.maxInputs)
-                throw new AuraError('INVALID_OPERATION');
-            if (this.handles.size >= 2048)
+            if (this.handles.size >= 512)
                 throw new AuraError('HANDLE_LIMIT');
-            const result = Computed.parse(await this.remote.request('compute', { ...scope, op, domain, objectIds: refs.map(r => r.objectId) }, signal));
-            this.scope(result);
-            this.validateRefs([result.object]);
-            if (result.object.domain !== domain)
-                throw new AuraError('INVALID_RESULT_DOMAIN');
+            const health = await this.remote.health(signal);
+            if (!this.options.demo && (health.role !== 'compute' || health.secretKeyLoaded !== false || health.keyId !== this.keyId))
+                throw new AuraError('COMPUTE_ONLY_KEY_SCOPE_REQUIRED');
+            if (!(await this.capabilities(signal)).some(c => c.op === op && c.domain === domain))
+                throw new AuraError('OPERATION_UNAVAILABLE');
+            let ciphertext = refs[0].ciphertext;
+            for (const ref of refs.slice(1)) {
+                if (signal?.aborted)
+                    throw new AuraError('CANCELLED');
+                ciphertext = Ciphertext.parse(await this.remote.call(FUNCTIONS[op][domain], [ciphertext, ref.ciphertext], signal));
+            }
             if (signal?.aborted)
                 throw new AuraError('CANCELLED');
-            const expiresAt = Math.min(result.object.expiresAt, ...refs.map(r => r.expiresAt));
+            const expiresAt = Math.min(...refs.map(ref => ref.expiresAt));
             if (expiresAt <= this.now())
                 throw new AuraError('UNKNOWN_OR_EXPIRED_HANDLE');
-            return this.remember({ ...result.object, expiresAt });
+            return this.remember({ domain, ciphertext, operation: op, expiresAt });
         });
     }
-    async exportResult(handle, signal) {
+    async exportResult(handle) {
         return this.exclusive(async () => {
-            const scope = await this.ensure(signal);
             const ref = this.lookup(handle);
-            const result = Exported.parse(await this.remote.request('result.export', { ...scope, objectId: ref.objectId, expiresAt: ref.expiresAt }, signal));
-            this.scope(result);
-            if (result.expiresAt <= this.now() || result.expiresAt > Math.min(this.session.expiresAt, ref.expiresAt))
-                throw new AuraError('INVALID_RESULT_EXPIRY');
-            return { resultId: result.resultId, domain: ref.domain, expiresAt: result.expiresAt };
+            if (!ref.operation || !this.keyId)
+                throw new AuraError('COMPUTED_RESULT_REQUIRED');
+            const resultId = `ct_${randomBytes(16).toString('hex')}`;
+            await this.options.writeResult({ version: 1, keyId: this.keyId, resultId, domain: ref.domain, ciphertext: ref.ciphertext, operation: ref.operation });
+            return { resultId, domain: ref.domain, encrypted: true };
         });
     }
-    async release(handles, signal) {
+    async release(handles) {
         return this.exclusive(async () => {
-            const scope = await this.ensure(signal);
+            if (!handles.length || handles.length > MAX_INPUTS)
+                throw new AuraError('INVALID_HANDLES');
             const unique = [...new Set(handles)];
-            const refs = unique.map(h => this.lookup(h));
-            const result = z.strictObject({ sessionId: OpaqueId, key: KeyRef, released: z.number().int().nonnegative() })
-                .parse(await this.remote.request('objects.release', { ...scope, objectIds: refs.map(r => r.objectId) }, signal));
-            this.scope(result);
-            if (result.released !== refs.length)
-                throw new AuraError('INVALID_RELEASE_RESULT');
-            for (const h of unique)
-                this.handles.delete(h);
-            return { released: result.released };
+            unique.forEach(h => this.lookup(h));
+            unique.forEach(h => this.handles.delete(h));
+            return { released: unique.length };
         });
     }
 }

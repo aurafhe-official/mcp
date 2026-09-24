@@ -1,4 +1,5 @@
-# AURA MCP
+# Aura MCP
 
-See [Setup](QUICKSTART.md), [Architecture](ARCHITECTURE.md), and
-[Privacy boundary](SECURITY-MODEL.md). This public package is a coprocessor client.
+The agent requests computation using encrypted handles. The public adapter routes
+it to Aura's private coprocessor and exports encrypted results for the recipient.
+See [README](../README.md) for verified scope and release limitations.

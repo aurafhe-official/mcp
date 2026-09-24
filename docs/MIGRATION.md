@@ -1,21 +1,22 @@
 # Migration
 
-This candidate replaces earlier remote-plaintext and local-engine experiments
-with a minimal coprocessor client. Do not deploy it until the private gateway
-implements the documented contract and the full owner-to-recipient flow passes.
+Use [Quickstart](QUICKSTART.md) to generate new host settings.
 
-- Remove legacy hosted plaintext, local engine and key-directory settings.
-- Provision the HTTPS gateway, protected service token and authorized key reference.
-- Keep source data ingestion/encryption and recipient decryption outside the model.
-- Use opaque dataset references, session handles and encrypted result references.
-- Pin the reviewed commit and restart the MCP process during upgrades.
+- Connecting needs Node and Git, with no cloned-path configuration, Python or
+  engine installation. Start with `--check` and `--config`.
+- Tools are `fhe_status`, `fhe_ops`, `fhe_inputs`, `fhe_compute`, `fhe_export`
+  and `fhe_release`. Computation takes `handles`, not `inputs`.
+- Plaintext evaluation/encrypt/decrypt tools and `--trusted-demo` are removed.
+  `--demo` permits only five fixed public inputs and encrypted export.
+- The earlier proposed session/dataset gateway is replaced by the deployed REST
+  API. No new gateway deployment is implied.
+- Replace old `AFHE_*` settings and draft gateway key settings with documented
+  `AURA_*` configuration. Version 1 numeric bundle/result envelopes remain
+  compatible with a separately supplied owner integration.
+- Shared HTTP, TLS bypass, automatic key loading and raw dispatch are unsupported.
+- Native adapters, owner integration code, engine parameters and build identifiers
+  are outside this public package. Removing current files does not erase prior
+  GitHub history or downloaded copies.
 
-There are no encryption, decryption, automatic reveal, arbitrary native-function
-or shared inbound HTTP tools. The public package does not distribute owner-side
-cryptography tooling. The private gateway must enforce ownership and key lifecycle
-regardless of any checks performed by this client.
-
-Removal from a current branch or package does not erase previous GitHub commits,
-PR revisions, caches or downloaded copies. Repository-history cleanup, if needed,
-is a separate administrative operation and must not be represented as complete
-merely because the latest tree is smaller.
+The confidentiality gate already on main is preserved. This is a synthetic
+diagnostic preview, not a production privacy release.

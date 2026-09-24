@@ -1,42 +1,31 @@
-# Privacy and disclosure boundary
+# Privacy boundary
 
-## Public client
+The intended private workflow is owner-side encryption, remote ciphertext
+computation and recipient-side decryption. This public adapter implements the
+connection and handle portion. Owner tooling, service key custody and cryptography
+are external dependencies.
 
-The public repository contains the MCP interface, HTTPS client, public request
-and response validation, opaque-handle lifecycle and contract tests. It does not
-contain the engine implementation, native bindings, evaluation algorithms, key
-generation, parameter sets, binary fingerprints, private deployment configuration
-or engine verification artifacts.
+The hosted synthetic demo uses backend encryption and decryption. It verifies
+functionality, not infrastructure blindness. TLS protects the connection; it does
+not prove that the service cannot recover plaintext. The existing confidentiality
+gate remains blocked until the engine and complete architecture receive independent
+review. No engine details need to be published to state that limit accurately.
 
-The model receives only documented public operations, dataset/handle/result
-references, domains and expiry/readiness metadata. It can still observe operation
-and timing patterns. The client does not print credentials, raw server responses,
-internal error messages, ciphertext bytes or diagnostic logs.
+Client controls include verified HTTPS, optional bearer authentication (required
+for bundle mode), response validation, operation allowlisting, per-process random
+handles, expiry, bounds, cancellation and sanitized errors. A matching compute-only
+worker declaration is required for bundle computation. A server can misreport its
+role: metadata and key IDs are not cryptographic assurance. The private service
+must enforce principal/key/operation ownership and isolation.
 
-## Private service
+One stdio process serves one operator context. No shared inbound HTTP service or
+multi-tenant authorization layer is provided. Processes alone do not isolate
+owner files when OS permissions are shared. Keep owner data, keys and decryption
+credentials inaccessible to the model's other tools; protect exported ciphertext.
 
-Aura's private coprocessor owns execution and engine integration. Its gateway must
-enforce authenticated principal/session/key/resource binding, revocation, quotas,
-encrypted result delivery and safe error handling. Client handle scoping is
-additional protection, not a replacement for backend authorization. Credentials
-must be provisioned outside model context.
-
-The private service may disclose the stable API needed by clients without
-publishing its computation implementation. Privacy/security evaluation can be
-performed confidentially; it does not require putting proprietary source into
-this public repository.
-
-## Data owners and recipients
-
-To claim that the model and compute infrastructure do not receive source plaintext
-or secret decryption keys, encryption must occur in the owner's controlled
-environment and decryption at the authorized recipient. Their tools must also be
-inaccessible through the model's other filesystem/shell integrations. Merely
-moving plaintext encryption/decryption behind an HTTPS endpoint does not create
-that stronger boundary.
-
-This client performs no encryption or decryption. Owner-side provisioning and
-recipient-side opening are separate service integrations. Result integrity,
-permitted output policy, evaluation-material security and cryptographic security
-must be established for the complete deployed system. These are not inferred from
-passing client contract tests or from keeping an implementation proprietary.
+Before sensitive-data use: clear the engine confidentiality gate; verify owner-only
+secret-key custody and owner/recipient encryption/decryption; enforce backend
+authorization and two-owner isolation; test tampering, revocation and key rotation;
+establish arithmetic ranges, depth, service limits and recipient disclosure policy.
+Repository tests cover the adapter and bounded synthetic computations, not those
+production assurances.

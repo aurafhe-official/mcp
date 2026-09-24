@@ -1,24 +1,33 @@
-# Validation status
+# Verification
 
-This candidate validates the public client's transport and reference-handling
-contract with fixtures. It does not include engine implementation tests or private
-engine evidence in the public package.
+Checked 24 September 2026. These are functional and adapter checks, not a
+cryptographic audit or production release.
 
-Run `npm test` and `npm run test:package`. The suite checks mandatory HTTPS and
-authentication, fixed endpoint routing, redirect rejection, response size limits,
-timeouts, cancellation, scope/expiry checks, cross-connection handles, operation
-arity, strict tool arguments and suppression of internal errors. Packaging tests
-enforce an explicit inventory of public files. CI runs these checks on Windows
-and Ubuntu with Node 20, 22 and 24.
+| Check | Observed result |
+| --- | --- |
+| Hosted HTTPS certificate | Verified for api.afhe.io; expires 27 October 2026 |
+| Health and function discovery | Successful over verified HTTPS |
+| Local regression suite | 23 tests passed, zero skipped |
+| Actual stdio MCP -> hosted compute -> encrypted file -> external verification | 10 fixed synthetic arithmetic checks passed |
+| Service key configuration | No load, key generation or initialization requested |
+| Confidentiality release gate | Still blocked |
 
-Before release, the private integration must verify:
+Live cases: integer add/subtract/multiply/divide; float
+add/subtract/multiply/divide; an encrypted float average composed from sum/division;
+and an integer multiply using a previous encrypted sum. Expected results included
+42, 8, 425, 1, 10, 5, 18.75, 3, 5 and 714 respectively. Float tolerance: 0.01.
+This is bounded sample coverage, not proof for arbitrary values or circuit depth.
 
-1. Actual gateway compatibility and a valid TLS configuration.
-2. Principal/key ownership and adversarial cross-tenant/revoked-access denial.
-3. Owner-side encrypted ingestion, ciphertext-only remote evaluation and
-   authorized recipient-side decryption through a real MCP client.
-4. Operation correctness, arithmetic range and precision on the deployed service.
-5. Required cryptographic assurance and operational controls for advertised claims.
+The live verifier prepares only fixed public inputs. MCP returns handles and
+encrypted result IDs; the verifier reads those artifacts and requests decryption
+outside MCP. The hosted API can decrypt its demo data, so this check does not
+establish owner-only key custody.
 
-Passing the public client tests does not establish these service properties.
-Keep sensitive engine evidence and deployment configuration in private systems.
+`npm test` checks protocol behavior, transport limits, cancellation, invalid
+inputs, isolation, expiry, file bounds, host configuration and the stdio handshake.
+`npm run test:package` installs the packed artifact and checks its public inventory.
+`npm run test:live` explicitly performs the live check; failures are not skipped.
+CI runs offline/package checks on Windows and Ubuntu with Node 20, 22 and 24.
+
+Independent engine confidentiality review, production key isolation and multi-tenant
+authorization remain outside these results. No production sign-off is implied.

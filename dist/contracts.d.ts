@@ -1,12 +1,12 @@
 import * as z from 'zod/v4';
-export declare const VERSION = "0.5.0-rc.2";
-export declare const PROTOCOL = "aura-coprocessor/1";
+export declare const VERSION = "0.5.0-rc.3";
+export declare const DEFAULT_ENDPOINT = "https://api.afhe.io:8443";
 export declare const MAX_INPUTS = 128;
 export declare const MAX_RESPONSE: number;
-export declare const OpaqueId: z.ZodString;
+export declare const MAX_BUNDLE: number;
+export declare const MAX_CIPHERTEXT: number;
 export declare const Handle: z.ZodString;
 export declare const Domain: z.ZodEnum<{
-    string: "string";
     int: "int";
     float: "float";
 }>;
@@ -15,111 +15,63 @@ export declare const Operation: z.ZodEnum<{
     add: "add";
     sub: "sub";
     mul: "mul";
-    mean: "mean";
-    concat: "concat";
+    div: "div";
 }>;
 export type Operation = z.infer<typeof Operation>;
-export declare const KeyRef: z.ZodObject<{
-    id: z.ZodString;
-    version: z.ZodNumber;
+export declare const Ciphertext: z.ZodString;
+export declare const InputBundle: z.ZodObject<{
+    version: z.ZodLiteral<1>;
+    keyId: z.ZodString;
+    inputs: z.ZodArray<z.ZodObject<{
+        domain: z.ZodEnum<{
+            int: "int";
+            float: "float";
+        }>;
+        ciphertext: z.ZodString;
+    }, z.core.$strict>>;
 }, z.core.$strict>;
-export type KeyRef = z.infer<typeof KeyRef>;
-export declare const Capability: z.ZodObject<{
-    op: z.ZodEnum<{
+export type InputBundle = z.infer<typeof InputBundle>;
+export declare const ResultBundle: z.ZodObject<{
+    version: z.ZodLiteral<1>;
+    keyId: z.ZodString;
+    resultId: z.ZodString;
+    domain: z.ZodEnum<{
+        int: "int";
+        float: "float";
+    }>;
+    ciphertext: z.ZodString;
+    operation: z.ZodEnum<{
         add: "add";
         sub: "sub";
         mul: "mul";
-        mean: "mean";
-        concat: "concat";
+        div: "div";
     }>;
-    domain: z.ZodEnum<{
-        string: "string";
-        int: "int";
-        float: "float";
-    }>;
-    minInputs: z.ZodNumber;
-    maxInputs: z.ZodNumber;
 }, z.core.$strict>;
-export type Capability = z.infer<typeof Capability>;
-export declare const SessionInfo: z.ZodObject<{
-    sessionId: z.ZodString;
-    key: z.ZodObject<{
-        id: z.ZodString;
-        version: z.ZodNumber;
-    }, z.core.$strict>;
-    expiresAt: z.ZodNumber;
-    capabilities: z.ZodArray<z.ZodObject<{
-        op: z.ZodEnum<{
-            add: "add";
-            sub: "sub";
-            mul: "mul";
-            mean: "mean";
-            concat: "concat";
-        }>;
-        domain: z.ZodEnum<{
-            string: "string";
-            int: "int";
-            float: "float";
-        }>;
-        minInputs: z.ZodNumber;
-        maxInputs: z.ZodNumber;
-    }, z.core.$strict>>;
-}, z.core.$strict>;
-export type SessionInfo = z.infer<typeof SessionInfo>;
-export declare const ObjectRef: z.ZodObject<{
-    objectId: z.ZodString;
-    domain: z.ZodEnum<{
-        string: "string";
-        int: "int";
-        float: "float";
-    }>;
-    expiresAt: z.ZodNumber;
-}, z.core.$strict>;
-export type ObjectRef = z.infer<typeof ObjectRef>;
-export declare const Imported: z.ZodObject<{
-    sessionId: z.ZodString;
-    key: z.ZodObject<{
-        id: z.ZodString;
-        version: z.ZodNumber;
-    }, z.core.$strict>;
-    objects: z.ZodArray<z.ZodObject<{
-        objectId: z.ZodString;
-        domain: z.ZodEnum<{
-            string: "string";
-            int: "int";
-            float: "float";
-        }>;
-        expiresAt: z.ZodNumber;
-    }, z.core.$strict>>;
-}, z.core.$strict>;
-export declare const Computed: z.ZodObject<{
-    sessionId: z.ZodString;
-    key: z.ZodObject<{
-        id: z.ZodString;
-        version: z.ZodNumber;
-    }, z.core.$strict>;
-    object: z.ZodObject<{
-        objectId: z.ZodString;
-        domain: z.ZodEnum<{
-            string: "string";
-            int: "int";
-            float: "float";
-        }>;
-        expiresAt: z.ZodNumber;
-    }, z.core.$strict>;
-}, z.core.$strict>;
-export declare const Exported: z.ZodObject<{
-    sessionId: z.ZodString;
-    key: z.ZodObject<{
-        id: z.ZodString;
-        version: z.ZodNumber;
-    }, z.core.$strict>;
-    resultId: z.ZodString;
-    expiresAt: z.ZodNumber;
-}, z.core.$strict>;
+export type ResultBundle = z.infer<typeof ResultBundle>;
 export declare class AuraError extends Error {
     readonly code: string;
     constructor(code: string);
 }
-export declare function sameKey(a: KeyRef, b: KeyRef): boolean;
-export declare function supported(c: Capability): boolean;
+export declare const FUNCTIONS: {
+    readonly add: {
+        readonly int: "AddCipherInt";
+        readonly float: "AddCipherFloat";
+    };
+    readonly sub: {
+        readonly int: "SubstractCipherInt";
+        readonly float: "SubstractCipherFloat";
+    };
+    readonly mul: {
+        readonly int: "MultiplyCipherInt";
+        readonly float: "MultiplyCipherFloat";
+    };
+    readonly div: {
+        readonly int: "DivideCipherInt";
+        readonly float: "DivideCipherFloat";
+    };
+};
+export declare const FunctionList: z.ZodObject<{
+    arity1: z.ZodArray<z.ZodString>;
+    arity2: z.ZodArray<z.ZodString>;
+    arity3: z.ZodArray<z.ZodString>;
+}, z.core.$strip>;

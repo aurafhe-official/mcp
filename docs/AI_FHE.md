@@ -1,4 +1,5 @@
-# AURA MCP
+# Agent workflow
 
-See [Setup](QUICKSTART.md), [Architecture](ARCHITECTURE.md), and
-[Privacy boundary](SECURITY-MODEL.md). This public package is a coprocessor client.
+Check status and operations, list provisioned handles, compute, then export the
+encrypted result. Owner encryption and recipient decryption remain outside the
+model. [Protocol](PROTOCOL.md) lists supported operations and limitations.

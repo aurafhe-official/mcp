@@ -2,9 +2,11 @@
   "servers": {
     "aura": {
       "type": "stdio",
-      "command": "node",
+      "command": "npx",
       "args": [
-        "/absolute/path/mcp/dist/index.js"
+        "-y",
+        "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp",
+        "--demo"
       ]
     }
   }

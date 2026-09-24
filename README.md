@@ -1,58 +1,57 @@
 # AURA MCP
 
-A minimal MCP client for encrypted computation through Aura's authenticated
-coprocessor. The public package contains tool definitions, reference validation,
-HTTPS transport and client tests. The computation engine stays in Aura's private
-service.
+Connect an MCP-compatible agent to Aura's coprocessor. Computation stays in the
+remote service; this repository contains the connection adapter, not the engine.
 
-**Integration candidate:** the service contract in this branch must be implemented
-or mapped by the private coprocessor gateway before deployment. Client tests use
-contract fixtures; they do not establish live-service compatibility or production
-cryptographic security. This candidate does not fall back to a local engine or
-the legacy plaintext API.
+**Diagnostic preview: synthetic data only. The confidentiality release gate is
+still blocked. Working arithmetic and valid HTTPS do not establish that Aura
+cannot recover inputs.**
 
-```text
-Owner application: encrypt and provision data
-        ↓ encrypted dataset reference
-Agent → AURA MCP client → authenticated Aura coprocessor
-        ↑ encrypted result reference
-Authorized recipient: retrieve and decrypt outside model context
-```
+## Connect
 
-## Public tools
-
-| Tool | Purpose |
-| --- | --- |
-| `fhe_status` | Check the authenticated service session |
-| `fhe_ops` | List public operations enabled by the service |
-| `fhe_import` | Open a previously encrypted dataset by reference |
-| `fhe_compute` | Request remote computation on this session's handles |
-| `fhe_export` | Obtain an encrypted result reference for the recipient |
-| `fhe_release` | Release this session's references |
-
-The model receives handles, operation metadata and result references. No tools
-accept source plaintext, credentials, key files, raw engine functions or internal
-paths. The package contains no cryptographic implementation, native libraries,
-key-generation tooling, engine parameters or internal evaluation recipes.
-
-## Configuration
-
-Provision the gateway endpoint, service credential and authorized key reference
-outside the model. See [Setup](docs/QUICKSTART.md) and the [public service contract](docs/PROTOCOL.md).
-HTTPS certificate verification is mandatory. Shared inbound HTTP is not exposed
-by this package; each stdio connection opens its own service session.
+Install Node.js 20+ and Git. This candidate is on the PR branch, not npm.
 
 ```sh
-npm ci --ignore-scripts --no-audit --no-fund
-npm test
-npm run test:package
+npx -y github:aurafhe-official/mcp#rebuild/owner-controlled-mcp --check
+npx -y github:aurafhe-official/mcp#rebuild/owner-controlled-mcp --config cursor --demo
 ```
 
-[Privacy boundary](docs/SECURITY-MODEL.md) · [Architecture](docs/ARCHITECTURE.md) ·
-[Migration](docs/MIGRATION.md) · [Validation](docs/VERIFICATION.md)
+Replace `cursor` with `claude` or `vscode`. Copy the generated JSON into your
+host's MCP settings and reconnect. The generator handles Windows and contains no
+credentials. It prints settings without editing existing configuration.
+[Host locations and troubleshooting](docs/QUICKSTART.md).
 
-The engine can remain proprietary while ciphertext computation is offered through
-an API. Data privacy additionally depends on owner-side encryption, recipient-side
-decryption, backend authorization and the security of the deployed cryptosystem.
-Sending source values or secret keys to the compute service would change that
-privacy boundary. Keeping source code private alone does not establish it.
+Then ask your agent:
+
+> Check Aura, list its demo input handles, add integer inputs 0 and 1, and export
+> the encrypted result.
+
+The demo uses only fixed public examples. It sends arithmetic to the live
+coprocessor and gives the agent an encrypted result reference. Decryption is a
+separate recipient action. Omit `--demo` for a connection that checks status and
+operations until the operator provisions encrypted inputs.
+
+## What works
+
+Six tools: `fhe_status`, `fhe_ops`, `fhe_inputs`, `fhe_compute`, `fhe_export`,
+`fhe_release`. Addition, subtraction, multiplication and division work on integer
+and float ciphertexts when advertised by the connected service. Sum and product
+can combine multiple handles. An average is a sum followed by division by an
+owner-supplied encrypted count. [Formats and limits](docs/PROTOCOL.md).
+
+MCP accepts no source values, key files, arbitrary paths or engine function names.
+Export writes an encrypted file to the configured recipient directory and returns
+only its ID. No native library, cryptographic implementation, engine parameter set
+or owner SDK is included in this package.
+
+The hosted demo also supports backend decryption. Operator-provisioned bundles
+require an authenticated compute-only worker with the matching key ID. That
+check does not prove cryptographic confidentiality. The existing engine release
+gate remains in force. [Privacy boundary](docs/SECURITY-MODEL.md) ·
+[Release status](release-status.json).
+
+This is a local stdio MCP adapter connecting over HTTPS. The coprocessor API is
+not a hosted MCP URL. Shared inbound HTTP is not provided.
+
+[Setup](docs/QUICKSTART.md) · [Verification](docs/VERIFICATION.md) ·
+[Migration](docs/MIGRATION.md) · [Security](SECURITY.md)

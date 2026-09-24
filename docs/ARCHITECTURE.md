@@ -1,16 +1,18 @@
 # Architecture
 
-The MCP package is a thin authenticated client. A stdio connection receives a
-client session, opens a corresponding service session, and routes all dataset,
-computation, export and release work to the configured Aura gateway. Computation
-never runs locally and there is no alternate native backend.
+```text
+MCP host -> local public adapter -> HTTPS -> Aura coprocessor
+                |                              private engine
+         encrypted result file
+                |
+      separately authorized recipient
+```
 
-Only the public operation name and opaque authorized references cross this API.
-The private service translates that request into its internal execution. The
-MCP keeps random local handles so internal object references are not exposed to
-the model. Strict response schemas keep backend diagnostics and extra fields out
-of tool results. No process is spawned to execute engine code or read key files.
+The adapter owns validation, process-local handles, HTTPS requests and encrypted
+artifact I/O. The service owns computation. Owner/recipient integrations are
+external; no native worker, engine parameters or private build identifiers are
+distributed. [Privacy boundary](SECURITY-MODEL.md).
 
-The private gateway and owner/recipient applications are required integration
-components. Their current endpoint/authorization contract must be verified or
-adapted to the proposed public contract before this candidate is deployed.
+The default connection can start and list tools without provisioning. The optional
+demo provisions fixed public examples. Bundle mode reads one operator-configured
+encrypted file and requires an authenticated matching compute-only worker.

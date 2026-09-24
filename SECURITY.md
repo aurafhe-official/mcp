@@ -1,9 +1,21 @@
-# Security reporting
+# Security policy
 
-Report vulnerabilities privately to gen@afhe.io with the client version and a
-synthetic reproduction. Do not post credentials, source plaintext, keys, engine
-diagnostics, private source or deployment configuration in public issues.
+Report privately to security@afhe.io; do not publish sensitive details in issues.
 
-The public MCP is an interface to Aura's authenticated coprocessor. See
-[Privacy boundary](docs/SECURITY-MODEL.md) and [Validation status](docs/VERIFICATION.md)
-for the distinction between client checks and complete-system guarantees.
+**Diagnostic preview — synthetic data only. The existing confidentiality release
+gate remains blocked. Working arithmetic is not evidence that the processing
+provider cannot recover inputs.**
+
+The public package contains the connection adapter, not proprietary engine code,
+native bindings, SDK parameter sets or key material. Engine remediation and
+independent review remain prerequisites for real-data deployment. Removing
+implementation details from GitHub does not clear that release gate.
+
+MCP has no custom plaintext-input, decryption, secret-key or arbitrary-path tools.
+The optional demo encrypts fixed public examples at the service. That service can
+decrypt demonstration data and must not be presented as an owner-key-isolated
+production deployment.
+
+See [the privacy boundary](docs/SECURITY-MODEL.md). Tests do not confer production
+sign-off. Earlier published revisions may remain in GitHub history and existing
+copies after removal from the current tree.

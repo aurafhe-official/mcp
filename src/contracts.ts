@@ -1,35 +1,33 @@
 import * as z from 'zod/v4'
 
-export const VERSION = '0.5.0-rc.2'
-export const PROTOCOL = 'aura-coprocessor/1'
+export const VERSION = '0.5.0-rc.3'
+export const DEFAULT_ENDPOINT = 'https://api.afhe.io:8443'
 export const MAX_INPUTS = 128
-export const MAX_RESPONSE = 1024 * 1024
-export const OpaqueId = z.string().min(16).max(128).regex(/^[A-Za-z0-9_-]+$/)
-export const Handle = z.string().regex(/^ct_[0-9a-f-]{36}$/)
-export const Domain = z.enum(['int', 'float', 'string'])
+export const MAX_RESPONSE = 4 * 1024 * 1024
+export const MAX_BUNDLE = 16 * 1024 * 1024
+export const MAX_CIPHERTEXT = 2 * 1024 * 1024
+export const Handle = z.string().regex(/^ct_[0-9a-f]{32}$/)
+export const Domain = z.enum(['int', 'float'])
 export type Domain = z.infer<typeof Domain>
-export const Operation = z.enum(['add', 'sub', 'mul', 'mean', 'concat'])
+export const Operation = z.enum(['add', 'sub', 'mul', 'div'])
 export type Operation = z.infer<typeof Operation>
-export const KeyRef = z.strictObject({ id: OpaqueId, version: z.number().int().positive() })
-export type KeyRef = z.infer<typeof KeyRef>
-export const Capability = z.strictObject({ op: Operation, domain: Domain,
-  minInputs: z.number().int().min(1).max(MAX_INPUTS), maxInputs: z.number().int().min(1).max(MAX_INPUTS) })
-export type Capability = z.infer<typeof Capability>
-export const SessionInfo = z.strictObject({ sessionId: OpaqueId, key: KeyRef,
-  expiresAt: z.number().int().positive(), capabilities: z.array(Capability).max(32) })
-export type SessionInfo = z.infer<typeof SessionInfo>
-export const ObjectRef = z.strictObject({ objectId: OpaqueId, domain: Domain, expiresAt: z.number().int().positive() })
-export type ObjectRef = z.infer<typeof ObjectRef>
-export const Imported = z.strictObject({ sessionId: OpaqueId, key: KeyRef, objects: z.array(ObjectRef).min(1).max(MAX_INPUTS) })
-export const Computed = z.strictObject({ sessionId: OpaqueId, key: KeyRef, object: ObjectRef })
-export const Exported = z.strictObject({ sessionId: OpaqueId, key: KeyRef, resultId: OpaqueId, expiresAt: z.number().int().positive() })
+export const Ciphertext = z.string().min(1).max(MAX_CIPHERTEXT)
+  .refine(value => Buffer.byteLength(value) <= MAX_CIPHERTEXT)
+export const InputBundle = z.strictObject({ version: z.literal(1), keyId: z.string().min(1).max(128),
+  inputs: z.array(z.strictObject({ domain: Domain, ciphertext: Ciphertext })).min(1).max(MAX_INPUTS) })
+export type InputBundle = z.infer<typeof InputBundle>
+export const ResultBundle = z.strictObject({ version: z.literal(1), keyId: z.string().min(1).max(128),
+  resultId: Handle, domain: Domain, ciphertext: Ciphertext, operation: Operation })
+export type ResultBundle = z.infer<typeof ResultBundle>
 export class AuraError extends Error {
   constructor(public readonly code: string) { super(code) }
 }
-export function sameKey(a: KeyRef, b: KeyRef) { return a.id === b.id && a.version === b.version }
-export function supported(c: Capability) {
-  const ops: Record<Domain, Operation[]> = { int: ['add','sub','mul'], float: ['add','sub','mul','mean'], string: ['concat'] }
-  const minimum = c.op === 'mean' ? 1 : 2
-  return ops[c.domain].includes(c.op) && c.minInputs >= minimum && c.maxInputs >= c.minInputs &&
-    (c.op !== 'sub' || (c.minInputs === 2 && c.maxInputs === 2))
-}
+// Already-public HTTP API names, without engine implementation or parameters.
+export const FUNCTIONS = {
+  add: { int: 'AddCipherInt', float: 'AddCipherFloat' },
+  sub: { int: 'SubstractCipherInt', float: 'SubstractCipherFloat' },
+  mul: { int: 'MultiplyCipherInt', float: 'MultiplyCipherFloat' },
+  div: { int: 'DivideCipherInt', float: 'DivideCipherFloat' },
+} as const
+export const FunctionList = z.object({ arity1: z.array(z.string().max(128)).max(256),
+  arity2: z.array(z.string().max(128)).max(256), arity3: z.array(z.string().max(128)).max(256) })

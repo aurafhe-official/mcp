@@ -1,179 +1,172 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { randomUUID } from 'node:crypto'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { Client } from '@modelcontextprotocol/client'
 import { InMemoryTransport } from '@modelcontextprotocol/server'
-import { HttpsCoprocessor, type Action, type Coprocessor } from '../src/coprocessor.ts'
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
+import { HttpsCoprocessor, type Coprocessor } from '../src/coprocessor.ts'
 import { FheSession } from '../src/fhe.ts'
 import { createFheServer } from '../src/server.ts'
-import { MAX_RESPONSE, PROTOCOL } from '../src/contracts.ts'
+import { readBundle, resultWriter } from '../src/artifacts.ts'
+import { FUNCTIONS, MAX_RESPONSE, type ResultBundle } from '../src/contracts.ts'
 
-const key = { id: 'key_for_contract_test', version: 1 }
-const token = 'service_token_for_tests_only'
-const endpoint = 'https://coprocessor.example.invalid/mcp-client'
-function transport(reply: (request: any, init: RequestInit) => Response | Promise<Response>) {
-  return new HttpsCoprocessor({ endpoint, token, fetch: (async (url, init) => {
-    assert.equal(String(url), endpoint)
-    assert.equal(init!.redirect, 'error')
-    return reply(JSON.parse(init!.body as string), init!)
-  }) as typeof fetch })
-}
-function response(req: any, result: unknown) {
-  return Response.json({ protocol: PROTOCOL, requestId: req.requestId, result })
-}
+const endpoint = 'https://coprocessor.example.invalid'
+const bundle = { version: 1 as const, keyId: 'test-key', inputs: [
+  { domain: 'int' as const, ciphertext: 'cipher-a' }, { domain: 'int' as const, ciphertext: 'cipher-b' },
+  { domain: 'float' as const, ciphertext: 'cipher-c' }] }
 function fixture() {
   let now = Date.now()
-  const requests: { action: Action; payload: any }[] = []
-  const sessions = new Set<string>()
-  const remote: Coprocessor = { request: async (action, payload: any) => {
-    requests.push({ action, payload })
-    if (action === 'session.open') {
-      const sessionId = randomUUID(); sessions.add(sessionId)
-      return { sessionId, key, expiresAt: now + 3_600_000, capabilities: [
-        { op: 'add', domain: 'int', minInputs: 2, maxInputs: 128 },
-        { op: 'sub', domain: 'int', minInputs: 2, maxInputs: 2 },
-        { op: 'mean', domain: 'float', minInputs: 1, maxInputs: 128 },
-      ] }
-    }
-    assert.ok(sessions.has(payload.sessionId))
-    const scope = { sessionId: payload.sessionId, key }
-    if (action === 'session.status') return { ...scope, ready: true }
-    if (action === 'dataset.import') return { ...scope, objects: [1,2].map(n => ({ objectId: `object_reference_${n}`, domain: 'int', expiresAt: now + 600_000 })) }
-    if (action === 'compute') return { ...scope, object: { objectId: 'computed_reference', domain: payload.domain, expiresAt: now + 600_000 } }
-    if (action === 'result.export') return { ...scope, resultId: 'encrypted_result_id', expiresAt: payload.expiresAt }
-    if (action === 'objects.release') return { ...scope, released: payload.objectIds.length }
-    throw new Error('unexpected action')
-  } }
-  const session = new FheSession(remote, key, () => now)
-  return { remote, session, requests, advance: (ms: number) => { now += ms } }
+  let health: any = { status: 'ok', role: 'compute', secretKeyLoaded: false, keyId: bundle.keyId }
+  const calls: any[] = [], results: ResultBundle[] = []
+  const remote: Coprocessor = {
+    health: async () => health,
+    functions: async () => ({ arity1: ['DecryptInt'], arity2: Object.values(FUNCTIONS).flatMap(Object.values), arity3: [] }),
+    call: async (fn,args) => { calls.push({fn,args}); return 'cipher-result' },
+  }
+  const session = new FheSession(remote, { bundle, writeResult: async r => { results.push(r) }, now: () => now })
+  return { session, remote, calls, results, setHealth: (value: any) => { health = value }, advance: (n: number) => { now += n } }
+}
+function transport(reply: (url: URL, init: RequestInit) => Response | Promise<Response>) {
+  return new HttpsCoprocessor({ endpoint, token: 'synthetic-test-token', fetch: ((url: any, init: any) => reply(new URL(url),init)) as typeof fetch })
 }
 
-test('transport uses HTTPS, credentials, one fixed endpoint and correlation IDs', async () => {
-  const remote = transport((req, init) => {
-    assert.equal((init.headers as any).authorization, `Bearer ${token}`)
-    assert.equal(req.protocol, PROTOCOL)
-    assert.equal(req.action, 'compute')
-    assert.deepEqual(req.payload, { op: 'add', objectIds: ['reference_a','reference_b'] })
-    return response(req, { accepted: true })
+test('actual REST contract uses verified HTTPS, bearer auth and strict ciphertext results',async()=>{
+  const c=transport((url,init)=>{
+    assert.equal(url.pathname,'/call');assert.equal(init.redirect,'error')
+    assert.equal((init.headers as any).authorization,'Bearer synthetic-test-token')
+    assert.deepEqual(JSON.parse(init.body as string),{fn:'AddCipherInt',args:['cipher-a','cipher-b']})
+    return Response.json({result:'cipher-result'})
   })
-  assert.deepEqual(await remote.request('compute', { op: 'add', objectIds: ['reference_a','reference_b'] }), { accepted: true })
+  assert.equal(await c.call('AddCipherInt',['cipher-a','cipher-b']),'cipher-result')
 })
-test('invalid endpoints and credentials are rejected', () => {
-  for (const url of ['http://example.com', 'https://user:pass@example.com', 'https://example.com?token=secret', 'https://example.com#fragment']) {
-    assert.throws(() => new HttpsCoprocessor({ endpoint: url, token }), /INVALID_HTTPS_ENDPOINT/)
-  }
-  assert.throws(() => new HttpsCoprocessor({ endpoint, token: 'x\r\nsecret' }), /INVALID_SERVICE_CREDENTIAL/)
+test('transport rejects raw encryption/decryption dispatch before any request',async()=>{
+  const c=transport(()=>{assert.fail('must not send')})
+  for(const name of ['DecryptInt','EncryptInt','arbitrary']) await assert.rejects(c.call(name,['a','b']),/INVALID_OPERATION/)
 })
-test('HTTP errors do not disclose backend bodies or credentials', async () => {
-  for (const status of [401,403,429,500]) {
-    await assert.rejects(transport(() => new Response('SECRET_INTERNAL_TRACE', { status })).request('session.status', {}), (e: any) => {
-      assert.ok(!e.message.includes('SECRET_INTERNAL_TRACE')); assert.ok(!e.message.includes(token)); return true
-    })
+test('malformed and diagnostic-bearing responses cannot become result handles',async()=>{
+  for(const value of [{},{result:''},{result:3},{result:'cipher',secret:'server-internal'}]) {
+    await assert.rejects(transport(()=>Response.json(value)).call('AddCipherInt',['a','b']))
   }
 })
-test('wrong correlation, malformed JSON and unexpected envelope fields fail', async () => {
-  for (const value of [new Response('not json', { headers: { 'content-type': 'application/json' } }), Response.json({ protocol: PROTOCOL, requestId: 'wrong', result: {} }), Response.json({ result: {}, diagnostics: 'private' })]) {
-    await assert.rejects(transport(() => value).request('session.status', {}), /PROTOCOL_FAILED/)
+test('response body errors and credentials are sanitized',async()=>{
+  const c=transport(()=>new Response('private server stack and token',{status:500}))
+  await assert.rejects(c.health(),e=>String(e)==='Error: COPROCESSOR_UNAVAILABLE')
+})
+test('insecure endpoints, embedded credentials, paths and TLS bypass are rejected',()=>{
+  for(const url of ['http://localhost','https://user:pass@example.test','https://example.test/path','https://example.test?token=x']) assert.throws(()=>new HttpsCoprocessor({endpoint:url}))
+  const previous=process.env.NODE_TLS_REJECT_UNAUTHORIZED
+  try {process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';assert.throws(()=>new HttpsCoprocessor(),/TLS_VERIFICATION_REQUIRED/)}
+  finally {if(previous===undefined)delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;else process.env.NODE_TLS_REJECT_UNAUTHORIZED=previous}
+})
+test('oversized response streams are bounded',async()=>{
+  const c=transport(()=>new Response(new ReadableStream({start(controller){controller.enqueue(new Uint8Array(MAX_RESPONSE+1));controller.close()}}),{headers:{'content-type':'application/json'}}))
+  await assert.rejects(c.health(),/COPROCESSOR_RESPONSE_LIMIT/)
+})
+test('aborted requests never reach the network',async()=>{
+  const c=transport(()=>{assert.fail('must not send')})
+  await assert.rejects(c.health(AbortSignal.abort()),/CANCELLED/)
+})
+test('timeout cancels an outstanding request and reports a generic error',async()=>{
+  const c=new HttpsCoprocessor({timeoutMs:1000,fetch:((_,init)=>new Promise((_,reject)=>init!.signal!.addEventListener('abort',()=>reject(new Error('internal'))))) as typeof fetch})
+  await assert.rejects(c.health(),/COPROCESSOR_TIMEOUT/)
+})
+test('operation discovery filters the live API to supported encrypted arithmetic',async()=>{
+  const f=fixture(); f.remote.functions=async()=>({arity1:['DecryptInt'],arity2:['AddCipherInt','Compare'],arity3:['CMux']})
+  assert.deepEqual((await f.session.ops()).ops,[{op:'add',domain:'int',minInputs:2,maxInputs:128}])
+})
+test('inputs -> remote computation -> encrypted artifact; no raw values in tool results',async()=>{
+  const f=fixture(), inputs=await f.session.inputs(), handles=inputs.inputs.slice(0,2).map(x=>x.handle)
+  const sum=await f.session.compute('add',handles), exported=await f.session.exportResult(sum.handle)
+  assert.equal(f.calls.length,1);assert.deepEqual(f.calls[0],{fn:'AddCipherInt',args:['cipher-a','cipher-b']})
+  assert.equal(f.results[0].ciphertext,'cipher-result');assert.equal(f.results[0].resultId,exported.resultId)
+  assert.ok(!JSON.stringify({inputs,sum,exported}).includes('cipher-'))
+  assert.equal(exported.encrypted,true)
+})
+test('key mismatch and secret-key-loaded workers reject bundle computation',async()=>{
+  for(const health of [{status:'ok'}, {status:'ok',role:'compute',secretKeyLoaded:true,keyId:bundle.keyId}, {status:'ok',role:'compute',secretKeyLoaded:false,keyId:'another'}]){
+    const f=fixture();f.setHealth(health)
+    const handles=(await f.session.inputs()).inputs.slice(0,2).map(x=>x.handle)
+    await assert.rejects(f.session.compute('add',handles),/COMPUTE_ONLY_KEY_SCOPE_REQUIRED/)
+    assert.equal(f.calls.length,0)
   }
 })
-test('oversized streaming responses are rejected', async () => {
-  const body = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array(MAX_RESPONSE + 1)); controller.close() } })
-  await assert.rejects(transport(() => new Response(body, { headers: { 'content-type': 'application/json' } })).request('session.status', {}), /RESPONSE_LIMIT/)
+test('unknown handles, mixed domains and invalid arity fail without computation',async()=>{
+  const f=fixture(), inputs=(await f.session.inputs()).inputs.map(x=>x.handle)
+  await assert.rejects(f.session.compute('add',['ct_'+'0'.repeat(32),inputs[0]]),/UNKNOWN_OR_EXPIRED_HANDLE/)
+  await assert.rejects(f.session.compute('add',[inputs[0],inputs[2]]),/DOMAIN_MISMATCH/)
+  for(const op of ['sub','div'] as const) await assert.rejects(f.session.compute(op,[inputs[0]]),/INVALID_OPERATION/)
+  assert.equal(f.calls.length,0)
 })
-test('cancellation stops the request without returning server diagnostics', async () => {
-  const controller = new AbortController()
-  const remote = transport((_, init) => new Promise((_, reject) => { init.signal!.addEventListener('abort', () => reject(new Error('secret')), { once: true }) }))
-  const pending = remote.request('session.status', {}, controller.signal)
-  controller.abort()
-  await assert.rejects(pending, /CANCELLED/)
+test('handles are isolated per session, expire and stay expired after derivation',async()=>{
+  const f=fixture(), other=fixture(), handles=(await f.session.inputs()).inputs.slice(0,2).map(x=>x.handle)
+  await assert.rejects(other.session.compute('add',handles),/UNKNOWN_OR_EXPIRED_HANDLE/)
+  const sum=await f.session.compute('add',handles)
+  f.advance(30*60_000)
+  await assert.rejects(f.session.exportResult(sum.handle),/UNKNOWN_OR_EXPIRED_HANDLE/)
+  assert.deepEqual((await f.session.inputs()).inputs,[])
 })
-test('timeout terminates the remote request', async () => {
-  const remote = new HttpsCoprocessor({ endpoint, token, timeoutMs: 1000, fetch: (async (_, init) => new Promise((_, reject) => { init!.signal!.addEventListener('abort', () => reject(new Error('private')), { once: true }) })) as typeof fetch })
-  await assert.rejects(remote.request('session.status', {}), /COPROCESSOR_TIMEOUT/)
+test('release is atomic and cannot leave stale usable handles',async()=>{
+  const f=fixture(), handles=(await f.session.inputs()).inputs.slice(0,2).map(x=>x.handle)
+  await assert.rejects(f.session.release([handles[0],'ct_'+'0'.repeat(32)]))
+  assert.equal((await f.session.release([handles[0],handles[0]])).released,1)
+  await assert.rejects(f.session.compute('add',handles),/UNKNOWN_OR_EXPIRED_HANDLE/)
 })
-test('all data work is routed through the coprocessor using opaque references', async () => {
-  const f = fixture()
-  assert.equal((await f.session.status()).execution, 'aura-coprocessor')
-  const imported = await f.session.importDataset('dataset_for_test_1')
-  const computed = await f.session.compute('add', imported.handles.map(h => h.handle))
-  assert.ok(!JSON.stringify(computed).includes('computed_reference'))
-  const exported = await f.session.exportResult(computed.handle)
-  assert.equal(exported.resultId, 'encrypted_result_id')
-  await f.session.release([computed.handle])
-  assert.deepEqual(f.requests.map(r => r.action), ['session.open','session.status','dataset.import','compute','result.export','objects.release'])
-  const compute = f.requests.find(r => r.action === 'compute')!.payload
-  assert.deepEqual(compute.objectIds, ['object_reference_1','object_reference_2'])
-  assert.ok(!Object.hasOwn(compute, 'values'))
+test('inputs cannot be exported as computed results',async()=>{
+  const f=fixture();await assert.rejects(f.session.exportResult((await f.session.inputs()).inputs[0].handle),/COMPUTED_RESULT_REQUIRED/)
 })
-test('handles cannot be reused by another connection', async () => {
-  const f = fixture(), other = new FheSession(f.remote, key)
-  const imported = await f.session.importDataset('dataset_for_test_1')
-  await assert.rejects(other.compute('add', imported.handles.map(h => h.handle)), /UNKNOWN_OR_EXPIRED/)
-  assert.equal(f.requests.filter(r => r.action === 'compute').length, 0)
+test('busy sessions reject concurrent work; cancellation does not create a handle',async()=>{
+  const f=fixture(); const handles=(await f.session.inputs()).inputs.slice(0,2).map(x=>x.handle)
+  let finish!:()=>void
+  f.remote.call=async()=>{await new Promise<void>(r=>{finish=r});return 'cipher'}
+  const controller=new AbortController(), running=f.session.compute('add',handles,controller.signal)
+  while(!finish)await new Promise(r=>setImmediate(r))
+  await assert.rejects(f.session.inputs(),/BUSY/)
+  controller.abort();finish();await assert.rejects(running,/CANCELLED/)
 })
-test('invalid arity, integer mean, unknown operations and handles fail before evaluation', async () => {
-  const f = fixture(), imported = await f.session.importDataset('dataset_for_test_1')
-  const handles = imported.handles.map(h => h.handle)
-  for (const [op, refs] of [['sub',[handles[0]]],['mean',handles],['not-an-op',handles],['add',['ct_unknown']]] as const) {
-    await assert.rejects(f.session.compute(op as any, [...refs]))
+test('demo encrypts only the fixed documented values and never loads keys',async()=>{
+  const values: string[]=[]
+  const c=transport((url,init)=>{assert.match(url.pathname,/^\/encrypt\/(int|float)$/);const b=JSON.parse(init.body as string);assert.equal(b.public,true);values.push(b.value);return Response.json({ciphertext:'cipher-demo'})})
+  assert.equal((await c.demoBundle()).inputs.length,5)
+  assert.deepEqual(values,['25','17','7.5','2.5','2'])
+})
+test('bundle and demo cannot be combined',()=>{
+  const f=fixture();assert.throws(()=>new FheSession(f.remote,{bundle,demo:async()=>bundle,writeResult:async()=>{}}),/DEMO_AND_BUNDLE_CONFLICT/)
+})
+test('operator file boundaries reject paths and extra fields; exports never overwrite',async()=>{
+  const dir=await mkdtemp(path.join(tmpdir(),'aura-test-')),input=path.join(dir,'input.json')
+  await writeFile(input,JSON.stringify(bundle));assert.deepEqual(await readBundle(input),bundle)
+  await assert.rejects(readBundle('relative.json'),/ABSOLUTE_BUNDLE_PATH_REQUIRED/)
+  await writeFile(input,JSON.stringify({...bundle,secret:'extra'}));await assert.rejects(readBundle(input))
+  const output={version:1 as const,keyId:bundle.keyId,resultId:'ct_'+'a'.repeat(32),domain:'int' as const,ciphertext:'encrypted',operation:'add' as const}
+  const write=resultWriter(dir);await write(output);await assert.rejects(write(output))
+  assert.deepEqual(JSON.parse(await readFile(path.join(dir,output.resultId+'.json'),'utf8')),output)
+})
+test('actual MCP validation rejects plaintext, reveal flags and path arguments',async()=>{
+  const f=fixture(),server=createFheServer(f.session),client=new Client({name:'test',version:'1'})
+  const [a,b]=InMemoryTransport.createLinkedPair();await Promise.all([server.connect(a),client.connect(b)])
+  try{
+    assert.deepEqual((await client.listTools()).tools.map(x=>x.name).sort(),['fhe_compute','fhe_export','fhe_inputs','fhe_ops','fhe_release','fhe_status'])
+    for(const args of [{value:25},{path:'/secret'},{reveal:true}])assert.equal((await client.callTool({name:'fhe_inputs',arguments:args})).isError,true)
+    const result=await client.callTool({name:'fhe_inputs',arguments:{}})
+    assert.ok(!JSON.stringify(result).includes('cipher-a'))
+  }finally{await client.close();await server.close()}
+})
+test('zero-configuration installed entry performs an actual stdio handshake without backend calls',async()=>{
+  const client=new Client({name:'stdio-test',version:'1'})
+  const transport=new StdioClientTransport({command:process.execPath,args:['dist/index.js'],env:{...process.env,AURA_COPROCESSOR_URL:'https://127.0.0.1:1'} as Record<string,string>,stderr:'pipe'})
+  try{await client.connect(transport);assert.equal((await client.listTools()).tools.length,6)}finally{await client.close()}
+})
+test('config generator and help need no credentials, and never echo environment secrets',async()=>{
+  const run=promisify(execFile)
+  for(const host of ['cursor','claude','vscode']){
+    const {stdout}=await run(process.execPath,['dist/index.js','--config',host,'--demo'],{env:{...process.env,AURA_ACCESS_TOKEN:'must-not-appear'}})
+    const config=JSON.parse(stdout),entry=(config.servers??config.mcpServers).aura
+    assert.equal(entry.args.at(-1),'--demo');assert.ok(!stdout.includes('must-not-appear'))
   }
-  assert.equal(f.requests.filter(r => r.action === 'compute').length, 0)
-})
-test('expired handles and sessions fail closed', async () => {
-  const f = fixture(), imported = await f.session.importDataset('dataset_for_test_1')
-  f.advance(600_001)
-  await assert.rejects(f.session.exportResult(imported.handles[0].handle), /UNKNOWN_OR_EXPIRED/)
-  f.advance(3_600_000)
-  await assert.rejects(f.session.status(), /SESSION_EXPIRED/)
-})
-test('wrong session/key and unrequested internal fields never reach the model', async () => {
-  for (const update of [{ sessionId: 'other_session_identifier' }, { key: { ...key, version: 2 } }, { diagnostics: 'PRIVATE_INTERNAL_DETAIL' }]) {
-    const f = fixture(), base = f.remote.request.bind(f.remote)
-    f.remote.request = async (...args) => {
-      const value = await base(...args)
-      return args[0] === 'dataset.import' ? { ...(value as any), ...update } : value
-    }
-    await assert.rejects(f.session.importDataset('dataset_for_test_1'))
-  }
-})
-test('unsupported or duplicate capability entries are rejected', async () => {
-  for (const caps of [[{ op: 'mean', domain: 'int', minInputs: 1, maxInputs: 2 }], [{ op: 'sub', domain: 'int', minInputs: 1, maxInputs: 3 }], [{ op: 'add', domain: 'int', minInputs: 2, maxInputs: 2 },{ op: 'add', domain: 'int', minInputs: 2, maxInputs: 2 }]]) {
-    const f = fixture(), base = f.remote.request.bind(f.remote)
-    f.remote.request = async (...args) => ({ ...(await base(...args) as any), capabilities: caps })
-    await assert.rejects(f.session.ops(), /INVALID_COPROCESSOR_SESSION/)
-  }
-})
-test('MCP exposes only the public client tools and rejects reveal/plaintext fields', async t => {
-  const f = fixture(), server = createFheServer(f.session), client = new Client({ name: 'contract-test', version: '1' })
-  const [a,b] = InMemoryTransport.createLinkedPair()
-  await server.connect(b); await client.connect(a)
-  t.after(async () => { await client.close(); await server.close() })
-  assert.deepEqual((await client.listTools()).tools.map(t => t.name).sort(), ['fhe_compute','fhe_export','fhe_import','fhe_ops','fhe_release','fhe_status'])
-  const bad = await client.callTool({ name: 'fhe_import', arguments: { datasetId: 'dataset_for_test_1', value: 25 } })
-  assert.equal(bad.isError, true)
-  assert.equal(f.requests.length, 0)
-  const good = await client.callTool({ name: 'fhe_import', arguments: { datasetId: 'dataset_for_test_1' } })
-  const handles = JSON.parse((good.content as any)[0].text).handles.map((h: any) => h.handle)
-  const reveal = await client.callTool({ name: 'fhe_compute', arguments: { op: 'add', handles, reveal: true } })
-  assert.equal(reveal.isError, true)
-})
-test('MCP errors suppress unexpected internal error messages', async t => {
-  const f = fixture(); f.remote.request = async () => { throw new Error('PRIVATE_SERVER_TRACE') }
-  const server = createFheServer(f.session), client = new Client({ name: 'contract-test', version: '1' })
-  const [a,b] = InMemoryTransport.createLinkedPair()
-  await server.connect(b); await client.connect(a)
-  t.after(async () => { await client.close(); await server.close() })
-  const result = await client.callTool({ name: 'fhe_status', arguments: {} })
-  assert.equal(result.isError, true)
-  assert.ok(!JSON.stringify(result).includes('PRIVATE_SERVER_TRACE'))
-})
-test('startup requires service configuration and disallows shared HTTP', async () => {
-  const exec = promisify(execFile)
-  for (const args of [[],['--http']]) {
-    await assert.rejects(exec(process.execPath, ['dist/index.js', ...args], { env: {}, timeout: 10_000 }), (e: any) => {
-      assert.equal(e.stdout, ''); assert.match(e.stderr, /COPROCESSOR_CONFIGURATION_REQUIRED|STDIO_ONLY/); return true
-    })
-  }
+  assert.match((await run(process.execPath,['dist/index.js','--help'])).stdout,/synthetic data only/)
+  await assert.rejects(run(process.execPath,['dist/index.js','--http']))
 })

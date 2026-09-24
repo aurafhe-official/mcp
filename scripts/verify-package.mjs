@@ -3,6 +3,8 @@ import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { Client } from '@modelcontextprotocol/client'
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
 // npm_execpath is available under npm run on every supported platform.
@@ -16,7 +18,7 @@ const packed=JSON.parse(npm(['pack','--json','--pack-destination',dir]))[0]
 const files=packed.files.map(f=>f.path)
 for(const required of ['dist/index.js','dist/coprocessor.js','docs/QUICKSTART.md']) assert.ok(files.includes(required),required)
 // Explicit inventory: adding a directory to package.json is not enough to ship it.
-const allowed = /^(?:package\.json|README\.md|SECURITY\.md|LICENSE|dist\/(?:index|server|contracts|fhe|coprocessor)\.(?:js|d\.ts)|docs\/[A-Z_-]+\.md|examples\/(?:README\.md|connect\/(?:README\.md|mcp\.json)|mcp\/(?:README\.md|claude-desktop\.json|cursor\.json|vscode\.json)))$/
+const allowed = /^(?:package\.json|release-status\.json|README\.md|SECURITY\.md|LICENSE|dist\/(?:index|server|contracts|fhe|coprocessor|artifacts)\.(?:js|d\.ts)|docs\/[A-Z_-]+\.md|examples\/(?:README\.md|connect\/(?:README\.md|mcp\.json)|mcp\/(?:README\.md|claude-desktop\.json|cursor\.json|vscode\.json)))$/
 assert.deepEqual(files.filter(f=>!allowed.test(f)),[], 'Unexpected file in public package')
 const consumer=path.join(dir,'consumer');await mkdir(consumer)
 await writeFile(path.join(consumer,'package.json'), JSON.stringify({ name: 'aura-package-verification', version: '1.0.0', private: true }))
@@ -24,4 +26,12 @@ npm(['install','--ignore-scripts','--no-audit','--no-fund',path.join(dir,packed.
 const entry=path.join(consumer,'node_modules','@aurafhe','mcp','dist','index.js')
 const version=JSON.parse(await readFile(path.join(root,'package.json'),'utf8')).version
 assert.equal(execFileSync(process.execPath,[entry,'--version'],{encoding:'utf8'}).trim(),version)
+const settings=JSON.parse(execFileSync(process.execPath,[entry,'--config','cursor','--demo'],{encoding:'utf8'}))
+assert.equal(settings.mcpServers.aura.args.at(-1),'--demo')
+const client=new Client({name:'aura-package-test',version:'1'})
+try {
+  await client.connect(new StdioClientTransport({command:process.execPath,args:[entry],stderr:'pipe'}))
+  assert.equal(client.getServerVersion().version,version)
+  assert.equal((await client.listTools()).tools.length,6)
+} finally { await client.close() }
 console.log(`PASS public client installation ${version}: ${files.length} approved files`)
