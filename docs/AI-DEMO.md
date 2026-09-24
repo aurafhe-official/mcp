@@ -22,6 +22,11 @@ Keep the model identity and timing scope attached to the benchmark.
 
 ## Access the application
 
+**Aura AI Chat is invitation-only.** Existing invitees can use
+[chat.afhe.io](https://chat.afhe.io). To join, [request an invitation](mailto:gen@afhe.io?subject=Aura%20AI%20Chat%20invitation)
+or arrange a demonstration via **gen@afhe.io**. Installing MCP does not grant
+Chat access; the public MCP learning demo does not require an invitation.
+
 [chat.afhe.io](https://chat.afhe.io) is Aura's chat application address, separate
 from the MCP connection. **Access check, 24 September 2026:** the service failed
 its HTTPS certificate hostname check. The hosting configuration needs correction
@@ -34,7 +39,7 @@ This package does not submit prompts to Aura Chat or return model-generated text
 
 ## A useful first task
 
-When the application is reachable over valid HTTPS, use this invented memo:
+Once invited and the application is reachable over valid HTTPS, use this invented memo:
 
 > Fictional product memo: Project Maple launches in eight weeks. Two pilot
 > customers need CSV export; the integration is three weeks behind schedule.

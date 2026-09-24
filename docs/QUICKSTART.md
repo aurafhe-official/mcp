@@ -156,5 +156,7 @@ requires only package and host setup; confidential application integration also
 requires local cryptography, key storage, authentication and result handling.
 Browser WASM integration is planned and is not bundled in this release.
 
-The separate chat application is [chat.afhe.io](https://chat.afhe.io).
+The separate AI Chat application at [chat.afhe.io](https://chat.afhe.io) is
+**invitation-only**; request an invitation via **gen@afhe.io**. The public MCP
+learning demo does not require a Chat invitation.
 See its [current access check](AI-DEMO.md) before arranging a live demonstration.

@@ -7,7 +7,7 @@ export function applicationStory() {
   return {
     purpose: 'FHE is the computation foundation. Aura AI is an application of that foundation. MCP connects assistants to the operations actually exposed by this package.',
     experiences: [
-      { name: 'Aura AI', purpose: 'Try an AI task in the separate application.', entry: 'https://chat.afhe.io', runsThroughThisMcp: false },
+      { name: 'Aura AI', purpose: 'Try an AI task in the separate, invitation-only application. Request an invitation via gen@afhe.io.', entry: 'https://chat.afhe.io', runsThroughThisMcp: false },
       { name: 'Applications on Aura', purpose: 'Arrange an evaluation of encrypted databases, messaging or private inference.', entry: 'mailto:gen@afhe.io', runsThroughThisMcp: false },
       { name: 'Aura MCP', purpose: 'Learn how FHE works, integrate supported encrypted computations and explore application potential.', entry: 'https://github.com/aurafhe-official/mcp', runsThroughThisMcp: true },
     ],
@@ -45,7 +45,8 @@ export function applicationStory() {
       availableThroughThisMcp: false,
       access: { walkthrough: 'https://github.com/aurafhe-official/mcp/blob/main/docs/AI-DEMO.md',
         browserApplication: 'https://chat.afhe.io', availability: 'Not checked by this tool',
-        fallback: 'Arrange a demonstration via gen@afhe.io',
+        policy: 'Invitation-only', invitationRequired: true, requestInvitation: 'mailto:gen@afhe.io?subject=Aura%20AI%20Chat%20invitation',
+        fallback: 'Request an invitation or arranged demonstration via gen@afhe.io. The public MCP learning demo does not require a Chat invitation.',
         connectionAdvice: 'Open only over valid HTTPS. If the trial address is unavailable or the browser reports a certificate error, use the contact route.' },
     },
     availableHere: ['Discover Aura applications and their published evidence', 'Run public integer and float arithmetic through the coprocessor',
@@ -60,8 +61,8 @@ export function overviewGuide() {
     message: 'Aura applies encrypted computation to AI and data applications. Its website reports GPT-OSS-20B encrypted inference at 20+ tokens per second on one RTX PRO 6000 Blackwell GPU. That is an Aura-reported internal benchmark, not a measurement made by this MCP.',
     whyItMatters: 'Aura MCP helps you learn how FHE works, integrate supported encrypted operations into an application and explore further possibilities. Start with the AI application, a public learning lesson or your own application design; model inference is accessed separately.',
     choices: [
-      { label: 'Try Aura AI', url: 'https://chat.afhe.io',
-        description: 'Open the separate AI experience. If unavailable, request a demonstration via gen@afhe.io.',
+      { label: 'Aura AI Chat — invitation-only', url: 'https://chat.afhe.io',
+        description: 'Already invited? Open the separate AI Chat application. Otherwise, request an invitation via gen@afhe.io. The public MCP lesson remains open.',
         walkthrough: 'https://github.com/aurafhe-official/mcp/blob/main/docs/AI-DEMO.md' },
       { label: 'Evaluate Aura applications', url: 'mailto:gen@afhe.io',
         description: 'Discuss encrypted databases, messaging or a private inference deployment.' },
@@ -80,7 +81,7 @@ export const HOST_GUIDANCE = [
   'When the user asks to start, try Aura, or see a demo, call aura_start for the application overview first. For an explicit arithmetic or learning request, call aura_start with experience learn.',
   'Lead with the purpose and the user\'s task. The website benchmark is GPT-OSS-20B at 20+ tokens per second, Aura-reported, on one RTX PRO 6000 Blackwell GPU. Keep the model identity and timing scope as stated; do not describe this as a live speed measurement or independent verification.',
   'The separate AI application is not an inference tool in this package. Offer the AI walkthrough or application contact, and only use advertised numeric tools for computation. A link or benchmark is not an executed AI job.',
-  'Explain the three experiences: Aura AI for an application task, application evaluations with the team, and MCP for supported numeric integration. Use chat.afhe.io as the trial entry; do not claim it was reached unless actually checked.',
+  'Explain the three experiences: invitation-only Aura AI Chat for an application task, application evaluations with the team, and the public MCP for supported numeric integration. Existing invitees use chat.afhe.io; others can request an invitation via gen@afhe.io. A Chat invitation is not required for the public MCP lesson. Do not claim the Chat service was reached unless actually checked.',
   'Explain owner-side key generation, encrypted server computation and recipient-side decryption as an architecture. Distinguish this from the backend-keyed demo. Numeric correctness is not a security proof or evidence of LLM throughput.',
   'MCP has three purposes: teach FHE, integrate supported computations and explore application potential. For a building request, help map the public description of the task to available operations, client encryption, keys, authentication and result handling. Do not ask for private data in chat.',
   'Keep setup levels clear: the public lesson needs package installation and host configuration; a confidential application needs a configured client/server workflow. Browser WASM integration is planned and not included here. Do not promise one-click privacy or automatic support for every application.',
@@ -138,7 +139,7 @@ export function savedGuide() {
     message: 'You completed the sample workflow: prepare encrypted data, request a calculation on Aura, and save the encrypted result.',
     whyItMatters: 'The saved file contains the encrypted result of your chosen calculation. This MCP tour has not decrypted or verified its numerical value; use the separate synthetic verifier for a correctness check.',
     observed: ['The service returned an encrypted result.', 'The encrypted result was written to the configured results folder.'],
-    nextChoices: ['Try Aura AI at chat.afhe.io', 'Explain how encryption keys affect who can read a result', 'Try an average or weighted calculation with the public samples', 'Plan how my application could use encrypted computation', 'Show the verification evidence'],
+    nextChoices: ['Explore invitation-only Aura AI Chat at chat.afhe.io; request an invitation via gen@afhe.io', 'Explain how encryption keys affect who can read a result', 'Try an average or weighted calculation with the public samples', 'Plan how my application could use encrypted computation', 'Show the verification evidence'],
     resultReading: 'In an owner-controlled deployment, an authorized recipient decrypts with their own key. This public demo uses backend-managed keys and a separate synthetic verifier.',
   }
 }

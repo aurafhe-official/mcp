@@ -78,6 +78,9 @@ export declare class FheSession {
                     walkthrough: string;
                     browserApplication: string;
                     availability: string;
+                    policy: string;
+                    invitationRequired: boolean;
+                    requestInvitation: string;
                     fallback: string;
                     connectionAdvice: string;
                 };
@@ -239,6 +242,9 @@ export declare class FheSession {
                     walkthrough: string;
                     browserApplication: string;
                     availability: string;
+                    policy: string;
+                    invitationRequired: boolean;
+                    requestInvitation: string;
                     fallback: string;
                     connectionAdvice: string;
                 };
