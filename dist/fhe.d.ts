@@ -1,102 +1,64 @@
-export type Domain = 'int' | 'float' | 'string' | 'binary';
-/** Genesis coprocessor — the hosted AURA network agents connect to by default. */
-export declare const DEFAULT_COPROCESSOR_URL = "https://api.afhe.io:8443";
-export interface Coprocessor {
-    url?: string;
-    health(): Promise<{
-        status: string;
-    }>;
-    functions(): Promise<{
-        arity1: string[];
-        arity2: string[];
-        arity3: string[];
-    }>;
-    encrypt(domain: Domain, value: string, pub?: boolean): Promise<string>;
-    decrypt(domain: Domain, ciphertext: string): Promise<string>;
-    call(fn: string, args: string[]): Promise<string>;
-}
-export interface HttpCoprocessor extends Coprocessor {
-    connect(): Promise<void>;
-}
-export interface OpInfo {
-    name: string;
-    domains: Domain[];
-    arity: number;
-    summary: string;
-}
-export declare function resolveOp(op: string, domain: Domain, arity?: number): string;
+import { InputBundle, Operation, type ResultBundle } from './contracts.js';
+import type { Coprocessor } from './coprocessor.js';
+type Options = {
+    bundle?: InputBundle;
+    demo?: (signal?: AbortSignal) => Promise<InputBundle>;
+    writeResult: (value: ResultBundle) => Promise<void>;
+    now?: () => number;
+};
+/** Session-local handles; ciphertext arithmetic always runs at the coprocessor. */
 export declare class FheSession {
-    private readonly fhe;
-    private store;
-    private n;
-    constructor(fhe: Coprocessor);
-    ops(): OpInfo[];
-    status(): Promise<{
-        ok: boolean;
-        network: string;
-        coprocessor: string;
-        handles: number;
-        ops: OpInfo[];
-    }>;
-    encrypt(domain: Domain, value: string | number, opts?: {
-        public?: boolean;
-        raw?: boolean;
-    }): Promise<{
-        handle: string;
-        domain: Domain;
-        ciphertext: string | undefined;
-    }>;
-    decrypt(handle: string): Promise<{
-        plaintext: string;
-        domain: Domain;
-        handle: string;
-    }>;
-    compute(opts: {
-        op: string;
-        domain: Domain;
-        inputs: Array<string | number>;
-        reveal?: boolean;
-        raw?: boolean;
-    }): Promise<{
-        handle: string;
-        domain: Domain;
-        op: string;
-        plaintext: string | undefined;
-        ciphertext: string | undefined;
-    }>;
-    privateEval(opts: {
-        domain: Domain;
-        op: string;
-        values: Array<string | number>;
-        reveal?: boolean;
-        raw?: boolean;
-        sealedInputs?: boolean;
-    }): Promise<{
-        handle: string;
-        domain: Domain;
-        op: string;
-        plaintext: string | undefined;
-        ciphertext: string | undefined;
-    }>;
-    private sealInput;
-    private validateHandles;
-    private fold;
-    private finish;
+    private remote;
+    private options;
+    private handles;
+    private inputHandles;
+    private keyId?;
+    private loaded;
+    private busy;
+    private calls;
+    private now;
+    constructor(remote: Coprocessor, options: Options);
+    private exclusive;
+    private purge;
     private remember;
     private lookup;
+    status(signal?: AbortSignal): Promise<{
+        backendReachable: boolean;
+        execution: string;
+        mode: string;
+        inputsConfigured: boolean;
+        productionReady: boolean;
+        confidentialityVerified: boolean;
+    }>;
+    private capabilities;
+    ops(signal?: AbortSignal): Promise<{
+        ops: {
+            op: string;
+            domain: string;
+            minInputs: number;
+            maxInputs: number;
+        }[];
+    }>;
+    inputs(signal?: AbortSignal): Promise<{
+        inputs: {
+            handle: string;
+            index: number;
+            domain: "int" | "float";
+            expiresAt: number;
+        }[];
+    }>;
+    compute(op: Operation, handles: string[], signal?: AbortSignal): Promise<{
+        handle: string;
+        domain: "int" | "float";
+        expiresAt: number;
+    }>;
+    exportResult(handle: string): Promise<{
+        resultId: string;
+        domain: "int" | "float";
+        encrypted: boolean;
+    }>;
+    release(handles: string[]): Promise<{
+        released: number;
+    }>;
 }
-export interface HttpCoprocessorOptions {
-    baseUrl: string;
-    fetch?: typeof fetch;
-    apiKey?: string;
-    autoLoad?: boolean;
-    timeoutMs?: number;
-    insecureTLS?: boolean;
-    keys?: {
-        skb?: string;
-        pkb?: string;
-        dictb?: string;
-    };
-}
-export declare function createHttpCoprocessor(opts: HttpCoprocessorOptions): HttpCoprocessor;
-export declare function envCoprocessor(): HttpCoprocessor;
+export {};

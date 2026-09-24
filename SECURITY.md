@@ -1,11 +1,21 @@
 # Security policy
 
-Report privately to security@afhe.io; do not publish vulnerability details in issues.
+Report privately to security@afhe.io; do not publish sensitive details in issues.
 
-**Diagnostic preview — synthetic data only. The supplied native engine has not passed the confidentiality release gate. Working arithmetic is not evidence that the compute provider cannot recover inputs.**
+**Diagnostic preview — synthetic data only. The existing confidentiality release
+gate remains blocked. Working arithmetic is not evidence that the processing
+provider cannot recover inputs.**
 
-The default MCP has no plaintext-input, encryption, decryption or arbitrary-file tools. It imports an owner-prepared ciphertext bundle, sends arithmetic to a separate worker, and exports encrypted results. The owner CLI is a separate trusted application and must never be exposed as an agent tool. `--trusted-demo` retains the former trusted-backend mode and is unsuitable for confidential data.
+The public package contains the connection adapter, not proprietary engine code,
+native bindings, private parameters or key material. Engine remediation and
+independent review remain prerequisites for real-data deployment. Removing
+implementation details from GitHub does not clear that release gate.
 
-The native engine's confidentiality release gate is blocked. Restricting the adapter's routes is not a proof that an operator holding the native binary and evaluation material cannot recover inputs. Engine repair and independent review are required before privacy claims or real-data deployment.
+MCP has no custom plaintext-input, decryption, secret-key or arbitrary-path tools.
+The optional demo encrypts fixed public examples at the service. That service can
+decrypt demonstration data and must not be presented as an owner-key-isolated
+production deployment.
 
-Before production: validate the scheme and parameters, review evaluation-key leakage, isolate owner storage and credentials, authenticate inputs/results and ownership, implement computation authorization and resource limits, validate circuit depth and arithmetic ranges, and test key rotation and deletion. The result key tag is not cryptographic authentication or a correctness proof. No production sign-off is given by this repository's tests.
+See [the privacy boundary](docs/SECURITY-MODEL.md). Tests do not confer production
+sign-off. Earlier published revisions may remain in GitHub history and existing
+copies after removal from the current tree.

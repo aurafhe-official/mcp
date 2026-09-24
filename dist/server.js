@@ -1,158 +1,23 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
-import { FheSession, envCoprocessor } from './fhe.js';
-const DomainSchema = z.enum(['int', 'float', 'string', 'binary']);
-const VERSION = '0.5.0-preview.1';
-function json(data, isError = false) {
-    return {
-        content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-        isError,
-    };
+import { AuraError, Handle, MAX_INPUTS, Operation, VERSION } from './contracts.js';
+async function safe(fn) {
+    try {
+        return { content: [{ type: 'text', text: JSON.stringify(await fn()) }] };
+    }
+    catch (e) {
+        return { isError: true, content: [{ type: 'text', text: JSON.stringify({ error: e instanceof AuraError ? e.code : 'COPROCESSOR_REQUEST_FAILED' }) }] };
+    }
 }
-function fail(err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return json({ error: message }, true);
-}
-export function createFheServer(session = new FheSession(envCoprocessor())) {
-    const server = new McpServer({
-        name: 'aura',
-        version: VERSION,
-        title: 'AURA MCP',
-        websiteUrl: 'https://afhe.io',
-    }, {
-        instructions: 'AURA is an MCP adapter to a trusted compute backend. Plaintext tool arguments are visible to the MCP host/model and are sent to the backend for encryption. The backend also decrypts. This mode does not hide data from that backend. Use synthetic data only until owner-side encryption and key separation are implemented. Results stay as handles unless reveal=true. Never ask the user to paste secrets into chat.',
+export function createFheServer(session) {
+    const server = new McpServer({ name: 'aura', version: VERSION, title: 'AURA encrypted compute' }, {
+        instructions: 'Diagnostic preview for synthetic data. Computation runs at Aura’s coprocessor. First check fhe_status, fhe_ops and fhe_inputs. Compute using handles and export the encrypted result for separate recipient processing. Never request plaintext, credentials, keys or file paths in chat. Fixed demo inputs are public examples. Functional arithmetic does not establish confidentiality or production readiness.',
     });
-    server.registerTool('fhe_status', {
-        title: 'Private compute status',
-        description: 'MCP health check. Call this first so the agent knows the private-compute tools are online.',
-        annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
-    }, async () => {
-        try {
-            return json(await session.status());
-        }
-        catch (err) {
-            return fail(err);
-        }
-    });
-    server.registerTool('fhe_ops', {
-        title: 'List private ops',
-        description: 'List the private ops this MCP server can run (add, mean, concat, …). Pass these names to fhe_private_eval.',
-        annotations: { readOnlyHint: true, idempotentHint: true },
-    }, async () => json({ ops: session.ops() }));
-    server.registerTool('fhe_encrypt', {
-        title: 'Seal a value',
-        description: 'Encrypt a value for private AI compute. Returns a short handle (ct_…) the model can pass to later tools. The model must not treat the handle as plaintext.',
-        inputSchema: z.object({
-            domain: DomainSchema.describe('Value type: int, float, string, or binary'),
-            value: z.union([z.string(), z.number()]).describe('Plaintext to seal'),
-            public: z.boolean().optional().describe('Use public-key encrypt when the data owner should not share a secret key'),
-            raw: z.boolean().optional().describe('Also return the raw ciphertext blob'),
-        }),
-        annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
-    }, async ({ domain, value, public: pub, raw }) => {
-        try {
-            return json(await session.encrypt(domain, value, { public: pub, raw }));
-        }
-        catch (err) {
-            return fail(err);
-        }
-    });
-    server.registerTool('fhe_decrypt', {
-        title: 'Reveal a sealed result',
-        description: 'Decrypt a handle from fhe_encrypt / fhe_compute / fhe_private_eval. Only call this when the user asked to see the plaintext result.',
-        inputSchema: z.object({
-            handle: z.string().describe('Handle such as ct_1'),
-        }),
-        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
-    }, async ({ handle }) => {
-        try {
-            return json(await session.decrypt(handle));
-        }
-        catch (err) {
-            return fail(err);
-        }
-    });
-    server.registerTool('fhe_compute', {
-        title: 'Run a private operation',
-        description: 'Compute on sealed handles (and optional plaintext, which is sealed first). Does not decrypt unless reveal=true. Prefer fhe_private_eval for one-shot AI work.',
-        inputSchema: z.object({
-            op: z.string().describe('AI op name from fhe_ops, e.g. add, mul, mean, concat'),
-            domain: DomainSchema,
-            inputs: z.array(z.union([z.string(), z.number()])).min(1)
-                .describe('Handles (ct_…) and/or plaintext values'),
-            reveal: z.boolean().optional().describe('Decrypt the final result'),
-        }),
-        annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
-    }, async ({ op, domain, inputs, reveal }) => {
-        try {
-            return json(await session.compute({ op, domain: domain, inputs, reveal }));
-        }
-        catch (err) {
-            return fail(err);
-        }
-    });
-    server.registerTool('fhe_private_eval', {
-        title: 'One-shot private compute',
-        description: 'The main agent tool. Seals inputs, runs the op (add, mul, mean, concat, …) without showing intermediates, and optionally reveals only the final answer. Prefer this over encrypt/compute/decrypt.',
-        inputSchema: z.object({
-            domain: DomainSchema.describe('int for integers, float for real math, string for text, binary for bits'),
-            op: z.string().describe('add | sub | mul | div | mean | concat | … (see fhe_ops)'),
-            values: z.array(z.union([z.string(), z.number()])).min(1)
-                .describe('Plaintext inputs. They are sealed before compute.'),
-            reveal: z.boolean().optional().describe('Explicitly opt in to returning the final plaintext result; defaults to false'),
-        }),
-        annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
-    }, async ({ domain, op, values, reveal }) => {
-        try {
-            return json(await session.privateEval({
-                domain: domain,
-                op,
-                values,
-                reveal: reveal ?? false,
-            }));
-        }
-        catch (err) {
-            return fail(err);
-        }
-    });
-    server.registerPrompt('private-compute', {
-        title: 'Private compute',
-        description: 'Compute on synthetic demo data using a trusted backend. Plaintext arguments are visible to the host and backend.',
-        argsSchema: z.object({
-            task: z.string().describe('What to compute privately, e.g. "mean of these salaries"'),
-        }),
-    }, ({ task }) => ({
-        messages: [
-            {
-                role: 'user',
-                content: {
-                    type: 'text',
-                    text: [
-                        'Use Aura FHE private compute. Do not ask the user to paste secrets into chat if a tool can seal them.',
-                        'Workflow: fhe_status → fhe_private_eval (reveal=true only for the final answer).',
-                        'Never print raw ciphertext. Use handles (ct_…).',
-                        `Task: ${task}`,
-                    ].join('\n'),
-                },
-            },
-        ],
-    }));
-    server.registerResource('status', 'fhe://status', {
-        title: 'AURA MCP status',
-        description: 'Live status for this MCP server and its private-compute backend',
-        mimeType: 'application/json',
-    }, async (uri) => {
-        const status = await session.status();
-        return {
-            contents: [
-                {
-                    uri: String(uri),
-                    mimeType: 'application/json',
-                    text: JSON.stringify(status, null, 2),
-                },
-            ],
-        };
-    });
+    server.registerTool('fhe_status', { description: 'Check service reachability, input configuration and release status. Health does not prove key readiness or confidentiality.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.status(ctx.mcpReq.signal)));
+    server.registerTool('fhe_ops', { description: 'List supported numeric operations advertised by the connected coprocessor.', inputSchema: z.strictObject({}), annotations: { readOnlyHint: true } }, async (_, ctx) => safe(() => session.ops(ctx.mcpReq.signal)));
+    server.registerTool('fhe_inputs', { description: 'Get handles for the operator-provisioned encrypted inputs, or fixed public examples in demo mode. Accepts no source values or paths.', inputSchema: z.strictObject({}) }, async (_, ctx) => safe(() => session.inputs(ctx.mcpReq.signal)));
+    server.registerTool('fhe_compute', { description: 'Evaluate numeric ciphertext handles at Aura’s coprocessor. Division uses exactly two handles; a zero divisor cannot be checked locally. Returns an encrypted-result handle.', inputSchema: z.strictObject({ op: Operation, handles: z.array(Handle).min(2).max(MAX_INPUTS) }) }, async ({ op, handles }, ctx) => safe(() => session.compute(op, handles, ctx.mcpReq.signal)));
+    server.registerTool('fhe_export', { description: 'Save a computed ciphertext to the operator-configured output directory. Returns only its result ID. Decryption is outside MCP.', inputSchema: z.strictObject({ handle: Handle }) }, async ({ handle }) => safe(() => session.exportResult(handle)));
+    server.registerTool('fhe_release', { description: 'Forget selected handles in this process. Previously exported files are retained for the recipient.', inputSchema: z.strictObject({ handles: z.array(Handle).min(1).max(MAX_INPUTS) }) }, async ({ handles }) => safe(() => session.release(handles)));
     return server;
 }
-export { VERSION };

@@ -1,21 +1,68 @@
-# Protocol and compatibility
+# Public adapter interface
 
-**Diagnostic preview — synthetic data only. The supplied native engine has not passed the confidentiality release gate. Working arithmetic is not evidence that the compute provider cannot recover inputs.**
+The adapter uses the deployed REST API: `GET /health`, `GET /functions` and
+ciphertext-only `POST /call`. Fixed demo preparation also uses
+`POST /encrypt/int` and `/encrypt/float` with five hard-coded public examples.
+No MCP tool loads keys, initializes the engine, decrypts or dispatches arbitrary
+functions. Engine implementation remains private.
 
-There is **no** shared HTTP MCP endpoint in this preview. The historical backend survey dated 28 Aug 2026 is not a statement of present service availability. Default MCP transport is stdio and supports the five tools documented in the root README.
-
-## Native adapter HTTP contract
-
-All requests require a role-specific bearer token. Owner and compute origins must differ. HTTP is accepted by the clients only on literal loopback; remote workers require verified HTTPS. Redirects are refused.
-
-| Role | Route | Request / response |
+| MCP tool | Arguments | Result |
 | --- | --- | --- |
-| Both | GET /health | status, role, keyId, secretKeyLoaded, securityProfile |
-| Compute | GET /functions | arity1 empty, arity2 eight numeric functions, arity3 empty |
-| Compute | POST /call | {fn,args:[ciphertext,ciphertext]} → {result:ciphertext} |
-| Owner | POST /encrypt/int or /encrypt/float | {value:decimalString,public:false} → {ciphertext} |
-| Owner | POST /decrypt/int or /decrypt/float | {ciphertext} → {plaintext:string} |
+| `fhe_status` | none | Reachability, mode, configuration and release status |
+| `fhe_ops` | none | Supported operations intersected with service discovery |
+| `fhe_inputs` | none | Local handles, indexes, domains and expiry |
+| `fhe_compute` | `op`, `handles` | Result handle, domain and expiry |
+| `fhe_export` | `handle` | Encrypted result ID and domain |
+| `fhe_release` | `handles` | Number of forgotten handles |
 
-Unknown routes return 404; invalid arguments or dispatch return 400; missing/wrong authorization returns 401. Native errors can terminate the process and must be treated as failures. Function names retain the upstream spelling `SubstractCipherInt` / `SubstractCipherFloat`.
+Domains: `int`, `float`. Operations: `add`, `sub`, `mul`, `div`.
+Addition/multiplication accept 2–128 handles; subtraction/division require two.
+Operands must share a domain. Integer division follows backend semantics; floats
+are approximate. The adapter cannot inspect encrypted divisors or prove ranges
+and computation depth are safe. No comparison, scientific, string, binary, SQL,
+retrieval or model-inference capability is claimed by this preview.
 
-Input bundles contain version=1, keyId and 1–128 numeric ciphertext inputs. Results contain version, keyId, resultId, domain, operation and ciphertext. Key IDs are routing metadata, not a cryptographic proof. Default MCP operations are add/sub/mul/div; sub/div need exactly two handles of one domain. The adapter does not expose native comparison, mapping, signing, scientific or string functions.
+Handles expire after 30 minutes and belong to one process. Derived results inherit
+the earliest input expiry. Bounds: one active operation, 120 tool calls/minute,
+512 handles, 32 MiB stored ciphertext, 4 MiB network responses and 30-second
+request timeout. Cancellation reaches pending network calls. Redirects and TLS
+bypass are rejected; backend diagnostics do not appear in tool errors.
+
+## Encrypted files
+
+An external owner integration supplies the operator-configured JSON bundle:
+
+```json
+{"version":1,"keyId":"owner-key-reference","inputs":[{"domain":"int","ciphertext":"OPAQUE_CIPHERTEXT"},{"domain":"int","ciphertext":"OPAQUE_CIPHERTEXT"}]}
+```
+
+Placeholders are not working ciphertexts. Maximum bundle: 16 MiB, 1–128 inputs,
+2 MiB per ciphertext. Extra fields are rejected. Ciphertext is opaque to the
+adapter; it cannot verify correct encryption. The key ID is a routing tag, not
+authentication. Private backend policies must enforce credential/key/operation
+ownership and isolation.
+
+Exports retain the version 1 recipient envelope:
+
+```json
+{"version":1,"keyId":"owner-key-reference","resultId":"ct_00000000000000000000000000000000","domain":"int","ciphertext":"OPAQUE_CIPHERTEXT","operation":"add"}
+```
+
+Only computed handles can be exported. Files are created under the operator's
+configured directory and never overwritten. Tools return IDs, not contents or
+directory paths. Expiry and release do not delete exported files; the recipient
+controls retention and decryption separately.
+
+## Modes
+
+The default connection checks service status and operations without configuration.
+Computing an operator bundle requires a credential and the matching compute-only
+worker declaration. Metadata does not establish cryptographic confidentiality.
+
+`--demo` uses fixed public examples and the hosted API's existing key setup.
+It cannot load an owner bundle. The standalone synthetic verifier decrypts only
+its own demo artifacts outside MCP. The confidentiality release gate remains
+blocked in both modes.
+
+The previous draft-only `aura-coprocessor/1` session gateway is not required or
+asserted to be deployed. This version uses the existing REST API.
