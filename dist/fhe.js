@@ -26,6 +26,7 @@ export class FheSession {
     }
     roadmap() {
         return { applications: applicationStory(), foundation: 'FHE is the encrypted-computation layer; MCP connects agents to that layer. Applications compose its operations.',
+            integration: applicationStory().mcpPurpose,
             availableThroughMcp: ['int/float add', 'int/float sub', 'int/float mul', 'int/float div'],
             compositions: ['sum', 'product', 'float mean using an encrypted count', 'weighted sum using encrypted weights'],
             nextRelease: { status: 'planned', capability: 'binary operations' },

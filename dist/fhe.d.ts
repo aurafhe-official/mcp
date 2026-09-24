@@ -28,6 +28,37 @@ export declare class FheSession {
     roadmap(): {
         applications: {
             purpose: string;
+            experiences: {
+                name: string;
+                purpose: string;
+                entry: string;
+                runsThroughThisMcp: boolean;
+            }[];
+            mcpPurpose: {
+                learn: string;
+                integrate: string;
+                explore: string;
+                buildingGuide: string;
+                setup: {
+                    publicDemo: string;
+                    privateApplication: string;
+                    oneClickPrivateIntegration: boolean;
+                    wasm: string;
+                };
+            };
+            ownerControlledDesign: {
+                status: string;
+                client: string;
+                compute: string;
+                recipient: string;
+                whyTheKeyMatters: string;
+                demonstrationDifference: string;
+            };
+            evidence: {
+                numeric: string;
+                inference: string;
+                security: string;
+            };
             flagship: {
                 name: string;
                 model: string;
@@ -55,6 +86,18 @@ export declare class FheSession {
             privacy: string;
         };
         foundation: string;
+        integration: {
+            learn: string;
+            integrate: string;
+            explore: string;
+            buildingGuide: string;
+            setup: {
+                publicDemo: string;
+                privateApplication: string;
+                oneClickPrivateIntegration: boolean;
+                wasm: string;
+            };
+        };
         availableThroughMcp: string[];
         compositions: string[];
         nextRelease: {
@@ -121,6 +164,13 @@ export declare class FheSession {
                 label: string;
                 url: string;
                 description: string;
+                walkthrough: string;
+                action?: undefined;
+            } | {
+                label: string;
+                url: string;
+                description: string;
+                walkthrough?: undefined;
                 action?: undefined;
             } | {
                 label: string;
@@ -132,12 +182,44 @@ export declare class FheSession {
                 };
                 description: string;
                 url?: undefined;
+                walkthrough?: undefined;
             })[];
             nextStep: string;
             needsPrivateData: boolean;
         };
         applications: {
             purpose: string;
+            experiences: {
+                name: string;
+                purpose: string;
+                entry: string;
+                runsThroughThisMcp: boolean;
+            }[];
+            mcpPurpose: {
+                learn: string;
+                integrate: string;
+                explore: string;
+                buildingGuide: string;
+                setup: {
+                    publicDemo: string;
+                    privateApplication: string;
+                    oneClickPrivateIntegration: boolean;
+                    wasm: string;
+                };
+            };
+            ownerControlledDesign: {
+                status: string;
+                client: string;
+                compute: string;
+                recipient: string;
+                whyTheKeyMatters: string;
+                demonstrationDifference: string;
+            };
+            evidence: {
+                numeric: string;
+                inference: string;
+                security: string;
+            };
             flagship: {
                 name: string;
                 model: string;
@@ -203,6 +285,7 @@ export declare class FheSession {
                 expectedSumIsNotAnObservedResult: boolean;
             };
             modeNote: string;
+            keyLesson: string;
             steps: string[];
             nextStep?: undefined;
             needsPrivateData?: undefined;
@@ -220,6 +303,7 @@ export declare class FheSession {
                 expectedSumIsNotAnObservedResult: boolean;
             };
             modeNote: string;
+            keyLesson: string;
             steps: string[];
             needsPrivateData?: undefined;
         };

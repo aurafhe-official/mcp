@@ -4,6 +4,11 @@ Lead with a useful AI task. FHE is the computation foundation, Aura AI is an
 application, and MCP connects assistants to the capabilities exposed here.
 The numeric lesson is an optional explanation and integration check.
 
+The visitor journey is **Aura AI → application evaluations → MCP integration**.
+Use [chat.afhe.io](https://chat.afhe.io) as the chat application address, subject to the
+[current access check](AI-DEMO.md). [One foundation, three experiences](EXPERIENCES.md)
+provides a comparison that investors can read without understanding cryptography.
+
 ## 1. Establish the application and evidence
 
 Use the website's **GPT-OSS-20B, 20+ tokens/second, one RTX PRO 6000 Blackwell GPU**
@@ -21,6 +26,10 @@ protected and where the answer becomes readable. Do not infer AI key custody or
 performance from the numeric demo. No proprietary implementation needs to be
 published to provide a clear boundary and reproducible benchmark conditions.
 
+Use an invented memo, not a confidential document, for an introductory demo.
+If a server-view panel is available, explain what its counters observe. Ciphertext
+sizes and timing in a panel are useful diagnostics, not proof of key custody.
+
 ## 2. Show where the current MCP fits
 
 Connect with [Quickstart](QUICKSTART.md) and ask:
@@ -31,6 +40,13 @@ The overview offers an application walkthrough, the optional public-sample lesso
 and a developer reference. It also works offline. It does not call model inference.
 The current tools perform numeric operations; a future inference tool requires
 the actual service contract and appropriate input/key/output integration.
+
+Explain MCP's three purposes: teach FHE, integrate supported computations, and
+explore application potential. The learning demo needs installation and host
+configuration. A confidential application also needs client cryptography, key
+storage, authentication and result authorization. Browser WASM is planned client
+integration work; do not call the full private workflow one click today.
+[Learning-to-integration guide](BUILD-WITH-AURA.md).
 
 Aura confirms its FHE database and FHE-AI LLM inference applications are completed
 and available on request via **gen@afhe.io**, separately from the demo MCP.

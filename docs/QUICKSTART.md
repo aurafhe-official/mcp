@@ -104,7 +104,7 @@ absolute paths to the installed Node and MCP. Generate settings on the machine
 running the client. **Do not paste `/exec-daemon/node` or `/workspace/...` paths
 from someone else's cloud session into a local installation.**
 
-Current release: `0.5.0-rc.7` preview. Pin it with `@aurafhe/mcp@0.5.0-rc.7`.
+Current release: `0.5.0-rc.8` preview. Pin it with `@aurafhe/mcp@0.5.0-rc.8`.
 To update, repeat installation, regenerate settings, then fully restart the host.
 After moving Node or the package, regenerate settings too.
 For a terminal service check use `aura-fhe-mcp --check`; running the bare command
@@ -147,3 +147,14 @@ with operating-system permissions. [Security details](SECURITY-MODEL.md).
 - `OPERATION_UNAVAILABLE`: choose an operation advertised by `fhe_ops`.
 - References expire after 30 minutes: reconnect for fresh public samples; saved files persist.
 - `LEGACY_CONFIGURATION_UNSUPPORTED`: remove old `AFHE_*`, native-library and draft key settings.
+
+## From the demo to your application
+
+Use the [learning and integration guide](BUILD-WITH-AURA.md) to understand keys,
+compose calculations and plan your client/server workflow. The public lesson
+requires only package and host setup; confidential application integration also
+requires local cryptography, key storage, authentication and result handling.
+Browser WASM integration is planned and is not bundled in this release.
+
+The separate chat application is [chat.afhe.io](https://chat.afhe.io).
+See its [current access check](AI-DEMO.md) before arranging a live demonstration.

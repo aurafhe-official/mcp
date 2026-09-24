@@ -22,11 +22,12 @@ Keep the model identity and timing scope attached to the benchmark.
 
 ## Access the application
 
-[Aura Chat](https://chat.afhe.io) is a separate browser application, not an MCP
-server URL. **Access check, 24 September 2026:** its certificate did not match the
-hostname in our browser and HTTPS checks. We could not run the AI application
-or independently measure its performance. Do not bypass a certificate warning.
-If access fails, arrange the application demonstration via **gen@afhe.io**.
+[chat.afhe.io](https://chat.afhe.io) is Aura's chat application address, separate
+from the MCP connection. **Access check, 24 September 2026:** the service failed
+its HTTPS certificate hostname check. The hosting configuration needs correction
+before this connection can be verified. We could not run the AI application or
+measure its performance. If access fails, arrange a demonstration via **gen@afhe.io**;
+do not bypass a browser certificate warning.
 
 The numeric MCP connection uses a different service and can still be tried.
 This package does not submit prompts to Aura Chat or return model-generated text.
@@ -48,7 +49,8 @@ token, output token count and generation speed if the application measures them.
 If those metrics are absent, label them unmeasured. A transcript does not by itself
 prove encrypted execution or answer quality.
 
-The demo should explain, in plain language, what reaches the service, which
+The [three-experience guide](EXPERIENCES.md) explains the role of the client, server
+and secret key. The demo should show, in plain language, what reaches the service, which
 inference steps are encrypted, where the secret key lives and where the answer
 becomes readable. Show observations as observations and design goals as design goals.
 Use public or invented content until the application's actual privacy model has

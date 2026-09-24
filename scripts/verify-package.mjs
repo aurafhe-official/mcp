@@ -18,7 +18,7 @@ const packed=JSON.parse(npm(['pack','--json','--pack-destination',dir]))[0]
 const files=packed.files.map(f=>f.path)
 for(const required of ['dist/index.js','dist/coprocessor.js','docs/QUICKSTART.md']) assert.ok(files.includes(required),required)
 // Explicit inventory: adding a directory to package.json is not enough to ship it.
-const allowed = /^(?:package\.json|release-status\.json|README\.md|README\.zh-CN\.md|SECURITY\.md|LICENSE|dist\/(?:index|server|contracts|fhe|guide|coprocessor|artifacts)\.(?:js|d\.ts)|docs\/(?:ARCHITECTURE|PROTOCOL|QUICKSTART|SECURITY-MODEL|VERIFICATION|INVESTOR-DEMO|AI-DEMO)\.md)$/
+const allowed = /^(?:package\.json|release-status\.json|README\.md|README\.zh-CN\.md|SECURITY\.md|LICENSE|dist\/(?:index|server|contracts|fhe|guide|coprocessor|artifacts)\.(?:js|d\.ts)|docs\/(?:ARCHITECTURE|PROTOCOL|QUICKSTART|SECURITY-MODEL|VERIFICATION|INVESTOR-DEMO|AI-DEMO|EXPERIENCES|BUILD-WITH-AURA)\.md)$/
 assert.deepEqual(files.filter(f=>!allowed.test(f)),[], 'Unexpected file in public package')
 const consumer=path.join(dir,'consumer');await mkdir(consumer)
 await writeFile(path.join(consumer,'package.json'), JSON.stringify({ name: 'aura-package-verification', version: '1.0.0', private: true }))
