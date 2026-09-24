@@ -68,11 +68,8 @@ the supported operations and their verification results when they become availab
 
 ## Using the public preview
 
-The public demo is for synthetic data and includes service-side decryption of its
-demo data. Custom encrypted inputs require a provisioned authenticated compute-only
-service. Owner-only confidentiality has not yet been verified, so this preview is
-not approved for confidential production data. Functional computation checks and
-production security assurance are separate; see the [security model](docs/SECURITY-MODEL.md).
+**Public demo:** Use synthetic data. Confidential deployments require verified
+key isolation and access controls. [Deployment security](docs/SECURITY-MODEL.md).
 
 [Setup](docs/QUICKSTART.md) · [Tools](docs/PROTOCOL.md) ·
 [Verification](docs/VERIFICATION.md) · [Security](SECURITY.md)
