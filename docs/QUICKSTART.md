@@ -5,10 +5,10 @@
 Install Node.js 20+ and Git, then run:
 
 ```sh
-npm install -g --install-links "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp"
+npm install -g --install-links "github:aurafhe-official/mcp#main"
 ```
 
-This installs the reviewed preview branch. No npm account or local computation
+This installs the current MCP preview. No npm account or local computation
 engine is needed. The registry package is not yet published.
 
 ## 2. Connect your app

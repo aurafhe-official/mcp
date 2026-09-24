@@ -8,7 +8,7 @@ Computation runs remotely; your agent receives handles and encrypted result IDs.
 Requires Node.js 20+ and Git for this GitHub installation.
 
 ```sh
-npm install -g --install-links "github:aurafhe-official/mcp#rebuild/owner-controlled-mcp"
+npm install -g --install-links "github:aurafhe-official/mcp#main"
 aura-fhe-mcp --config cursor --demo
 ```
 
@@ -28,7 +28,7 @@ For a quick terminal connection check:
 aura-fhe-mcp --check
 ```
 
-The reviewed preview currently installs from the GitHub branch above. The npm
+The preview currently installs from this repository. The npm
 registry package is not yet published. This page will switch to the registry
 install command after publication and a fresh installation check.
 
