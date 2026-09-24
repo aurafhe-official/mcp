@@ -28,6 +28,25 @@ export declare class FheSession {
     roadmap(): {
         applications: {
             purpose: string;
+            experiences: {
+                name: string;
+                purpose: string;
+                entry: string;
+                runsThroughThisMcp: boolean;
+            }[];
+            ownerControlledDesign: {
+                status: string;
+                client: string;
+                compute: string;
+                recipient: string;
+                whyTheKeyMatters: string;
+                demonstrationDifference: string;
+            };
+            evidence: {
+                numeric: string;
+                inference: string;
+                security: string;
+            };
             flagship: {
                 name: string;
                 model: string;
@@ -121,6 +140,13 @@ export declare class FheSession {
                 label: string;
                 url: string;
                 description: string;
+                walkthrough: string;
+                action?: undefined;
+            } | {
+                label: string;
+                url: string;
+                description: string;
+                walkthrough?: undefined;
                 action?: undefined;
             } | {
                 label: string;
@@ -132,12 +158,32 @@ export declare class FheSession {
                 };
                 description: string;
                 url?: undefined;
+                walkthrough?: undefined;
             })[];
             nextStep: string;
             needsPrivateData: boolean;
         };
         applications: {
             purpose: string;
+            experiences: {
+                name: string;
+                purpose: string;
+                entry: string;
+                runsThroughThisMcp: boolean;
+            }[];
+            ownerControlledDesign: {
+                status: string;
+                client: string;
+                compute: string;
+                recipient: string;
+                whyTheKeyMatters: string;
+                demonstrationDifference: string;
+            };
+            evidence: {
+                numeric: string;
+                inference: string;
+                security: string;
+            };
             flagship: {
                 name: string;
                 model: string;

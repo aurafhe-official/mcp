@@ -1,6 +1,6 @@
 # AURA MCP
 
-**Connect your assistant to Aura's encrypted computation. Start with the AI application, then explore the tools.**
+**FHE is the foundation. Aura AI is the application. MCP connects your assistant to encrypted tools.**
 
 FHE lets software calculate with data in its encrypted form. Aura's flagship AI
 application gives that foundation a practical purpose: useful AI with a defined
@@ -12,11 +12,15 @@ capabilities exposed here.
 internal benchmark, not a speed measured by this MCP or an independent validation.
 [Benchmark source and scope](https://afhe.io/#status).
 
-| Start with your goal | Where to go |
+| Three ways to experience Aura | Where to go |
 | --- | --- |
-| See the AI application and a useful business example | [Explore Aura AI](docs/AI-DEMO.md) |
-| Connect Cursor, Claude Desktop or VS Code | [Install and connect](#install-and-connect) |
-| Understand encrypted computation with public samples | [Optional learning lesson](#try-the-optional-learning-lesson) |
+| **1. Try Aura AI** with a business question and a follow-up | [aura.afhe.io](https://aura.afhe.io) · [Demo guide and access status](docs/AI-DEMO.md) |
+| **2. Evaluate applications**: encrypted databases, messaging or private inference | [Arrange an evaluation](mailto:gen@afhe.io) |
+| **3. Connect through MCP** from Cursor, Claude Desktop or VS Code | [Install and connect](#install-and-connect) · [Optional numeric lesson](#try-the-optional-learning-lesson) |
+
+[Understand the differences, keys and evidence](docs/EXPERIENCES.md). Start with
+the AI application for the product experience; use MCP to explore the supported
+numeric integration. If trial access is unavailable, arrange a demo via **gen@afhe.io**.
 
 The AI application is accessed separately; **this package does not run model
 inference**. Its executable tools provide encrypted numeric computation. Aura's
@@ -48,15 +52,16 @@ Then ask:
 
 > What can I do with Aura? Show me the AI application first, then explain what I can run here.
 
-Your assistant explains the published AI benchmark and offers three routes:
-explore the separate AI application, learn with public encrypted samples, or
-build with the current numeric tools. Connecting alone does not start a chat or
+Your assistant explains the published AI benchmark and the three experiences:
+the separate AI application, application evaluations, and the MCP integration.
+Within MCP, choose the optional public-sample lesson or the developer tools.
+Connecting alone does not start a chat or
 calculation. In clients with MCP prompts, choose **What can I do with Aura?**
 (`aura_demo`). The overview works without a backend connection; a separate status
 check or learning lesson checks the service.
 
-This is release **0.5.0-rc.7**, an explicitly labelled preview. To pin it, install
-`@aurafhe/mcp@0.5.0-rc.7`. To update an existing installation, run the installation
+This is release **0.5.0-rc.8**, an explicitly labelled preview. To pin it, install
+`@aurafhe/mcp@0.5.0-rc.8`. To update an existing installation, run the installation
 command again, regenerate settings and fully restart your client.
 
 ## What you can run here today

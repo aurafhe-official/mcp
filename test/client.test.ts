@@ -298,6 +298,12 @@ test('application overview works offline and keeps website claims separate from 
     assert.equal(flagship.benchmark.liveMeasurement,false)
     assert.equal(flagship.benchmark.independentlyVerifiedHere,false)
     assert.equal(flagship.availableThroughThisMcp,false)
+    assert.equal(flagship.access.browserApplication,'https://aura.afhe.io')
+    assert.equal(flagship.access.availability,'Not checked by this tool')
+    assert.equal(overview.applications.experiences.filter((e:any)=>e.runsThroughThisMcp).length,1)
+    assert.match(overview.applications.ownerControlledDesign.status,/not verification/)
+    assert.match(overview.applications.ownerControlledDesign.demonstrationDifference,/Aura-managed/)
+    assert.match(overview.applications.evidence.inference,/do not reproduce an AI benchmark/)
     assert.equal(overview.guide.nextAction,undefined)
     const lesson=overview.guide.choices.find((c:any)=>c.action)?.action
     assert.deepEqual(lesson,{tool:'aura_start',arguments:{experience:'learn'}})

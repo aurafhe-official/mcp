@@ -4,6 +4,25 @@ export declare const LEARN_PROMPT = "I am new to FHE. Run the optional Aura publ
 /** Public website claims, explicitly separate from this session's observations. */
 export declare function applicationStory(): {
     purpose: string;
+    experiences: {
+        name: string;
+        purpose: string;
+        entry: string;
+        runsThroughThisMcp: boolean;
+    }[];
+    ownerControlledDesign: {
+        status: string;
+        client: string;
+        compute: string;
+        recipient: string;
+        whyTheKeyMatters: string;
+        demonstrationDifference: string;
+    };
+    evidence: {
+        numeric: string;
+        inference: string;
+        security: string;
+    };
     flagship: {
         name: string;
         model: string;
@@ -38,6 +57,13 @@ export declare function overviewGuide(): {
         label: string;
         url: string;
         description: string;
+        walkthrough: string;
+        action?: undefined;
+    } | {
+        label: string;
+        url: string;
+        description: string;
+        walkthrough?: undefined;
         action?: undefined;
     } | {
         label: string;
@@ -49,6 +75,7 @@ export declare function overviewGuide(): {
         };
         description: string;
         url?: undefined;
+        walkthrough?: undefined;
     })[];
     nextStep: string;
     needsPrivateData: boolean;

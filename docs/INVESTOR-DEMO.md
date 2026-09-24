@@ -4,6 +4,11 @@ Lead with a useful AI task. FHE is the computation foundation, Aura AI is an
 application, and MCP connects assistants to the capabilities exposed here.
 The numeric lesson is an optional explanation and integration check.
 
+The visitor journey is **Aura AI → application evaluations → MCP integration**.
+Use [aura.afhe.io](https://aura.afhe.io) as the intended trial entry, subject to the
+[current access check](AI-DEMO.md). [One foundation, three experiences](EXPERIENCES.md)
+provides a comparison that investors can read without understanding cryptography.
+
 ## 1. Establish the application and evidence
 
 Use the website's **GPT-OSS-20B, 20+ tokens/second, one RTX PRO 6000 Blackwell GPU**
@@ -20,6 +25,10 @@ Explain which data is encrypted, where keys reside, which inference steps are
 protected and where the answer becomes readable. Do not infer AI key custody or
 performance from the numeric demo. No proprietary implementation needs to be
 published to provide a clear boundary and reproducible benchmark conditions.
+
+Use an invented memo, not a confidential document, for an introductory demo.
+If a server-view panel is available, explain what its counters observe. Ciphertext
+sizes and timing in a panel are useful diagnostics, not proof of key custody.
 
 ## 2. Show where the current MCP fits
 

@@ -5,6 +5,24 @@ export const LEARN_PROMPT = 'I am new to FHE. Run the optional Aura public-sampl
 export function applicationStory() {
     return {
         purpose: 'FHE is the computation foundation. Aura AI is an application of that foundation. MCP connects assistants to the operations actually exposed by this package.',
+        experiences: [
+            { name: 'Aura AI', purpose: 'Try an AI task in the separate application.', entry: 'https://aura.afhe.io', runsThroughThisMcp: false },
+            { name: 'Applications on Aura', purpose: 'Arrange an evaluation of encrypted databases, messaging or private inference.', entry: 'mailto:gen@afhe.io', runsThroughThisMcp: false },
+            { name: 'Aura MCP', purpose: 'Connect an assistant, learn the numeric workflow and integrate supported operations.', entry: 'https://github.com/aurafhe-official/mcp', runsThroughThisMcp: true },
+        ],
+        ownerControlledDesign: {
+            status: 'Architecture explanation, not verification of a deployed application.',
+            client: 'Generate and retain the secret key in the owner environment; encrypt inputs before sending them.',
+            compute: 'Evaluate supported operations on encrypted inputs without giving the compute operator a decryption key.',
+            recipient: 'Return encrypted outputs to the authorized client and decrypt there.',
+            whyTheKeyMatters: 'The secret key enables the intended recipient to read a result. An encrypted result alone does not show who holds that key.',
+            demonstrationDifference: 'The public numeric MCP demo uses Aura-managed example keys. It is a different custody model.',
+        },
+        evidence: {
+            numeric: 'The separate synthetic verifier checks numerical results, error, request time and ciphertext size for fixed public examples.',
+            inference: 'AI throughput depends on the model, hardware, input and output lengths, and timing definition. Numeric checks do not reproduce an AI benchmark.',
+            security: 'A successful calculation or a server-view panel does not establish cryptographic security or prove the absence of a server decryption key.',
+        },
         flagship: {
             name: 'Aura encrypted AI', model: 'GPT-OSS-20B', parameters: '20 billion',
             benchmark: { generationTokensPerSecond: '20+', hardware: 'One RTX PRO 6000 Blackwell GPU',
@@ -13,9 +31,9 @@ export function applicationStory() {
                 liveMeasurement: false, independentlyVerifiedHere: false },
             availableThroughThisMcp: false,
             access: { walkthrough: 'https://github.com/aurafhe-official/mcp/blob/main/docs/AI-DEMO.md',
-                browserApplication: 'https://chat.afhe.io', availability: 'Not checked by this tool',
+                browserApplication: 'https://aura.afhe.io', availability: 'Not checked by this tool',
                 fallback: 'Arrange a demonstration via gen@afhe.io',
-                connectionAdvice: 'Open only over valid HTTPS. If the browser reports a certificate error, stop and use the contact route.' },
+                connectionAdvice: 'Open only over valid HTTPS. If the trial address is unavailable or the browser reports a certificate error, use the contact route.' },
         },
         availableHere: ['Discover Aura applications and their published evidence', 'Run public integer and float arithmetic through the coprocessor',
             'Compose sums, averages and weighted sums', 'Export encrypted results for separate recipient processing'],
@@ -26,10 +44,13 @@ export function overviewGuide() {
     return {
         title: 'What can I do with Aura?',
         message: 'Aura applies encrypted computation to AI and data applications. Its website reports GPT-OSS-20B encrypted inference at 20+ tokens per second on one RTX PRO 6000 Blackwell GPU. That is an Aura-reported internal benchmark, not a measurement made by this MCP.',
-        whyItMatters: 'Start with a useful application: explore how Aura AI could help someone work with protected information. This MCP currently provides numeric computation and application guidance; model inference is accessed separately.',
+        whyItMatters: 'Start with a useful AI task, then distinguish the application from its FHE foundation and the MCP connection. This MCP currently provides numeric computation and application guidance; model inference is accessed separately.',
         choices: [
-            { label: 'Explore Aura AI', url: 'https://github.com/aurafhe-official/mcp/blob/main/docs/AI-DEMO.md',
-                description: 'A business example, application access and the published benchmark.' },
+            { label: 'Try Aura AI', url: 'https://aura.afhe.io',
+                description: 'Open the separate AI experience. If unavailable, request a demonstration via gen@afhe.io.',
+                walkthrough: 'https://github.com/aurafhe-official/mcp/blob/main/docs/AI-DEMO.md' },
+            { label: 'Evaluate Aura applications', url: 'mailto:gen@afhe.io',
+                description: 'Discuss encrypted databases, messaging or a private inference deployment.' },
             { label: 'Learn encrypted computation', action: { tool: 'aura_start', arguments: { experience: 'learn' } },
                 description: 'An optional hands-on lesson using public sample numbers.' },
             { label: 'Build with the current tools', url: 'https://github.com/aurafhe-official/mcp/blob/main/docs/PROTOCOL.md',
@@ -44,6 +65,8 @@ export const HOST_GUIDANCE = [
     'When the user asks to start, try Aura, or see a demo, call aura_start for the application overview first. For an explicit arithmetic or learning request, call aura_start with experience learn.',
     'Lead with the purpose and the user\'s task. The website benchmark is GPT-OSS-20B at 20+ tokens per second, Aura-reported, on one RTX PRO 6000 Blackwell GPU. Keep the model identity and timing scope as stated; do not describe this as a live speed measurement or independent verification.',
     'The separate AI application is not an inference tool in this package. Offer the AI walkthrough or application contact, and only use advertised numeric tools for computation. A link or benchmark is not an executed AI job.',
+    'Explain the three experiences: Aura AI for an application task, application evaluations with the team, and MCP for supported numeric integration. Use aura.afhe.io as the trial entry; do not claim it was reached unless actually checked.',
+    'Explain owner-side key generation, encrypted server computation and recipient-side decryption as an architecture. Distinguish this from the backend-keyed demo. Numeric correctness is not a security proof or evidence of LLM throughput.',
     'Respect overview choices: do not start arithmetic until the user chooses the lesson. Never bypass a browser certificate warning. Content entered in the host assistant is visible to that assistant provider.',
     'Speak in the user\'s language. Explain FHE once as computing with encrypted data, and ciphertext as the encrypted form of a value.',
     'Use guide.message and guide.whyItMatters to narrate each stage. Keep handles, tool names and JSON out of the explanation unless requested.',

@@ -104,7 +104,7 @@ absolute paths to the installed Node and MCP. Generate settings on the machine
 running the client. **Do not paste `/exec-daemon/node` or `/workspace/...` paths
 from someone else's cloud session into a local installation.**
 
-Current release: `0.5.0-rc.7` preview. Pin it with `@aurafhe/mcp@0.5.0-rc.7`.
+Current release: `0.5.0-rc.8` preview. Pin it with `@aurafhe/mcp@0.5.0-rc.8`.
 To update, repeat installation, regenerate settings, then fully restart the host.
 After moving Node or the package, regenerate settings too.
 For a terminal service check use `aura-fhe-mcp --check`; running the bare command
