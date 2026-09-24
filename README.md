@@ -5,10 +5,10 @@ Computation runs remotely; your agent receives handles and encrypted result IDs.
 
 ## Install and connect
 
-Requires Node.js 20+ and Git for this GitHub installation.
+Requires Node.js 20+. No Git or npm account is needed.
 
 ```sh
-npm install -g --install-links "github:aurafhe-official/mcp#main"
+npm install -g @aurafhe/mcp@preview
 aura-fhe-mcp --config cursor --demo
 ```
 
@@ -28,9 +28,8 @@ For a quick terminal connection check:
 aura-fhe-mcp --check
 ```
 
-The preview currently installs from this repository. The npm
-registry package is not yet published. This page will switch to the registry
-install command after publication and a fresh installation check.
+The `preview` tag installs the current synthetic-data preview. To install this
+exact release, use `@aurafhe/mcp@0.5.0-rc.4` instead.
 
 ## What works
 

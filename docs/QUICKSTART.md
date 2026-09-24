@@ -2,14 +2,14 @@
 
 ## 1. Install
 
-Install Node.js 20+ and Git, then run:
+Install Node.js 20+, then run:
 
 ```sh
-npm install -g --install-links "github:aurafhe-official/mcp#main"
+npm install -g @aurafhe/mcp@preview
 ```
 
-This installs the current MCP preview. No npm account or local computation
-engine is needed. The registry package is not yet published.
+This installs the current MCP preview. No Git, npm account or local computation
+engine is needed. Use `@aurafhe/mcp@0.5.0-rc.4` to pin this exact release.
 
 ## 2. Connect your app
 
